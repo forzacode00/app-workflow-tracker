@@ -25,3 +25,7 @@ dist-ssr
 
 # Claude Code: personlige innstillinger skal ikke deles
 .claude/settings.local.json
+
+# Playwright
+test-results
+playwright-report

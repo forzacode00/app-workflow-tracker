@@ -185,3 +185,25 @@
 .react-flow__connectionline path {
   stroke: var(--ring);
 }
+
+/* Tastaturfokus på bokser: React Flow fjerner outline, vi legger den tilbake med vår ring. */
+.react-flow__node.selectable:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+/* Håndtak: synlig del er liten, men trykkflaten er 44 px på berøring. */
+.react-flow__handle::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+}
+@media (pointer: coarse) {
+  .react-flow__handle::before {
+    inset: -16px;
+  }
+  .react-flow__controls button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

@@ -14,6 +14,18 @@ export default defineConfig({
   server: {
     port: 8080,
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            { name: "reactflow", test: /node_modules[\/](@xyflow|d3-|zustand|classcat)/ },
+            { name: "react", test: /node_modules[\/](react|react-dom|scheduler)[\/]/ },
+          ],
+        },
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],

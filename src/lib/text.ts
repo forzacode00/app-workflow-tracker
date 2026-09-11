@@ -6,12 +6,12 @@ export const lines = (text: string): string[] =>
     .map((l) => l.trim())
     .filter(Boolean);
 
-/** Linjer som starter med `#`, `---`, `|` eller `>` får en skråstrek foran, så de forblir tekst. */
+/** Linjer som starter med `#`, `---`, `|`, `>` eller kodegjerde får en skråstrek foran, så de forblir tekst. */
 export const block = (value: string): string =>
   value
     .trim()
     .split(/\r?\n/)
-    .map((l) => (/^\s*(#|---|\||>)/.test(l) ? `\\${l.trimStart()}` : l))
+    .map((l) => (/^\s*(#|---|\||>|`{3}|~{3})/.test(l) ? `\\${l.trimStart()}` : l))
     .join("\n");
 
 /** Én linje til bruk inne i setninger og punktlister. */
@@ -23,3 +23,6 @@ export const cell = (value: string): string =>
     .replace(/\|/g, "\\|")
     .replace(/\r?\n/g, " ")
     .trim() || "?";
+
+/** Klipper til maks lengde uten å kaste. Brukes der data kommer fra eldre versjoner. */
+export const clip = (value: string, max: number): string => (value.length > max ? value.slice(0, max) : value);

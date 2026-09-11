@@ -53,6 +53,18 @@ vis testresultat). Tallet på «Vis brief»-knappen er antall åpne spørsmål.
 - Brief-skuff med kopiering og JSON-deling. Angre på tøm, eksempel og import.
 - 78 tester: modell, migrering, brief, lagring, hooken og rendertester av appen.
 
+## Moduler og grensesnitt (krav fra Magnus, 2026-09-11)
+
+Flytdesigner skal brukes til å designe mange moduler som til sammen blir ett større nettsted eller
+økosystem. Modulene snakker med hverandre: det én modul gir ut, er det en annen tar inn. Etter
+hvert som modulene bygges, skal man kunne se hele nettstedet og grensesnittene mellom modulene.
+
+Konsekvens for modellen: et arbeidsområde har mange moduler (hver modul er et kart). En systemboks
+kan peke på en annen modul i stedet for fritekst, og en resultatboks i én modul kan være starten i
+en annen. Briefen for en modul får en «Grensesnitt»-seksjon (inn fra, ut til, hvilke data). En
+oversiktsvisning viser hver modul som én boks og grensesnittene som piler. Bygges i runde 2 av
+review-rundene.
+
 ## Veikart
 
 1. **Flere kart per bruker.** Liste med navn og antall åpne spørsmål. Bytte mellom kart.

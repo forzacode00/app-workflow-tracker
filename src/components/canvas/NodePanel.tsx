@@ -2,16 +2,23 @@ import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import type { FlowActions } from "@/hooks/useFlow";
 import { NODE_META, NODE_TYPES, type FlowNode } from "@/lib/flow";
 import { cn } from "@/lib/utils";
 import { TYPE_CLASS } from "./typeClass";
 
-type Props = { node: FlowNode; actions: Pick<FlowActions, "updateNode" | "addNode" | "removeNodes" | "select"> };
+type Props = {
+  node: FlowNode;
+  actions: Pick<FlowActions, "updateNode" | "addNode" | "removeNodes" | "select">;
+  onRemoved: (count: number) => void;
+};
 
-/** Panelet for den valgte boksen: tittel, notat, og knapper for å la kartet vokse videre. */
-export function NodePanel({ node, actions }: Props) {
+const TYPE_OPTIONS = NODE_TYPES.map((t) => ({ value: t, label: NODE_META[t].label }));
+
+/** Panelet for den valgte boksen: tittel, «legg til etter», notat, type og fjern. */
+export function NodePanel({ node, actions, onRemoved }: Props) {
   const meta = NODE_META[node.type];
   const titleRef = useRef<HTMLInputElement>(null);
   const lastId = useRef<string | null>(null);
@@ -24,10 +31,12 @@ export function NodePanel({ node, actions }: Props) {
     }
   }, [node.id, node.tittel]);
 
+  const growType = meta.next[0];
+
   return (
     <aside
       aria-label={`Rediger ${meta.label.toLowerCase()}`}
-      className="flex max-h-[55vh] flex-col gap-3 overflow-y-auto border-t border-border bg-card p-4 lg:max-h-none lg:w-[340px] lg:border-t-0 lg:border-l"
+      className="order-2 flex max-h-[45vh] flex-col gap-3 overflow-y-auto border-t border-border bg-card p-4 lg:max-h-none lg:w-[340px] lg:border-t-0 lg:border-l"
     >
       <div className="flex items-start justify-between gap-2">
         <div className={cn("text-[11px] font-semibold tracking-[0.08em] uppercase", TYPE_CLASS[node.type].split(" ")[1])}>{meta.label}</div>
@@ -37,28 +46,26 @@ export function NodePanel({ node, actions }: Props) {
       </div>
       <p className="m-0 text-[13px] text-secondary-foreground">{meta.hint}</p>
 
-      <Field id="node-tittel" label="Tittel">
-        <Input ref={titleRef} id="node-tittel" placeholder={meta.placeholder} value={node.tittel} onChange={(e) => actions.updateNode(node.id, { tittel: e.target.value })} />
-      </Field>
-      <Field id="node-notat" label="Notat" hint="Valgfritt. Alt du vil Claude skal vite om denne boksen.">
-        <Textarea id="node-notat" className="min-h-24" value={node.notat} onChange={(e) => actions.updateNode(node.id, { notat: e.target.value })} />
-      </Field>
-      <Field id="node-type" label="Type">
-        <select
-          id="node-type"
-          className="min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          value={node.type}
-          onChange={(e) => {
-            const t = NODE_TYPES.find((x) => x === e.target.value);
-            if (t) actions.updateNode(node.id, { type: t });
+      <Field
+        id="node-tittel"
+        label="Tittel"
+        hint={growType ? `Enter legger til ${NODE_META[growType].label.toLowerCase()} etter denne. Esc lukker.` : "Esc lukker."}
+      >
+        <Input
+          ref={titleRef}
+          id="node-tittel"
+          placeholder={meta.placeholder}
+          value={node.tittel}
+          onChange={(e) => actions.updateNode(node.id, { tittel: e.target.value })}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && growType) {
+              e.preventDefault();
+              actions.addNode(growType, node.id);
+            } else if (e.key === "Escape") {
+              actions.select(null);
+            }
           }}
-        >
-          {NODE_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {NODE_META[t].label}
-            </option>
-          ))}
-        </select>
+        />
       </Field>
 
       {meta.next.length > 0 && (
@@ -74,8 +81,26 @@ export function NodePanel({ node, actions }: Props) {
         </div>
       )}
 
+      <Field id="node-notat" label="Notat" hint="Valgfritt. Alt du vil Claude skal vite om denne boksen.">
+        <Textarea id="node-notat" className="min-h-24" value={node.notat} onChange={(e) => actions.updateNode(node.id, { notat: e.target.value })} />
+      </Field>
+
+      <details className="group">
+        <summary className="cursor-pointer text-sm font-semibold text-secondary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
+          Endre type
+        </summary>
+        <div className="pt-2">
+          <Select
+            aria-label="Type"
+            options={TYPE_OPTIONS}
+            value={node.type}
+            onValueChange={(type) => actions.updateNode(node.id, { type })}
+          />
+        </div>
+      </details>
+
       <div className="mt-auto pt-2">
-        <Button size="sm" variant="danger" onClick={() => actions.removeNodes([node.id])}>
+        <Button size="sm" variant="danger" onClick={() => onRemoved(actions.removeNodes([node.id]))}>
           Fjern boksen
         </Button>
       </div>
