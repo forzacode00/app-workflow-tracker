@@ -15,7 +15,7 @@ describe("overviewEdges", () => {
     const ws: Workspace = { versjon: 3, moduler: [a, b], aktiv: "a" };
     const edges = overviewEdges(ws);
     expect(edges).toHaveLength(1);
-    expect(edges[0]).toMatchObject({ source: "b", target: "a", label: "Fra B · Til A", known: true });
+    expect(edges[0]).toMatchObject({ source: "b", target: "a", label: "Fra B · Til A", known: true, offset: 0 });
   });
 
   it("slår sammen mer enn to etiketter til «+N», og bruker modulnavn når tittelen er tom", () => {
@@ -39,9 +39,13 @@ describe("overviewEdges", () => {
     expect(overviewEdges(ws)[0]).toMatchObject({ known: true, label: "Løs · Til B" });
   });
 
-  it("«begge» gir én pil hver vei, og id-er er unike på tvers av moduler", () => {
+  it("«begge» gir én pil hver vei med hver sin forskyvning, festet i sidene som vender mot hverandre", () => {
     const edges = overviewEdges(exampleWorkspace());
     expect(edges.map((e) => e.id).sort()).toEqual(["eks-oppfolging>eks-tilbud", "eks-tilbud>eks-oppfolging"]);
+    const fram = edges.find((e) => e.source === "eks-tilbud")!;
+    const tilbake = edges.find((e) => e.source === "eks-oppfolging")!;
+    expect(fram).toMatchObject({ offset: -18, sourceSide: "hoyre", targetSide: "venstre" });
+    expect(tilbake).toMatchObject({ offset: 18, sourceSide: "venstre", targetSide: "hoyre" });
     const a = seedModule("a", "A");
     const b = seedModule("b", "B");
     a.nodes.push(node("start", "start", "x", "b"));

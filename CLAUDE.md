@@ -47,7 +47,8 @@ Produksjonsbygget får en Content-Security-Policy som meta-tag (`vite.config.ts`
 
 ## Porter før «ferdig»
 `npm run lint` · `npm run typecheck` · `npm test` · `npm run build` · `npm run e2e`
-Ved UI-endring: åpne siden ved 360 px og 1280 px, lys og mørk.
+Ved UI-endring: `npx tsx e2e/skjermbilder.ts <mappe> http://127.0.0.1:8080/` tar skjermbilder ved 360 px og 1280 px i lys og
+mørk modus (tom modul, eksempel, oversikt, brief). Se gjennom dem før «ferdig».
 
 ## Avvik og fallgruver
 - React Flow i jsdom trenger stubber (ResizeObserver, DOMMatrixReadOnly, offsetWidth). De ligger i `src/test/setup.ts`.

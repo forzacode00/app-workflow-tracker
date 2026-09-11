@@ -1,4 +1,4 @@
-import { applyNodeChanges, Background, BackgroundVariant, Controls, MarkerType, ReactFlow, type Edge, type NodeChange } from "@xyflow/react";
+import { applyNodeChanges, Background, BackgroundVariant, Controls, MarkerType, ReactFlow, type NodeChange } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FlowActions } from "@/hooks/useWorkspace";
 import { summarizeNodeChanges } from "@/lib/canvasChanges";
@@ -6,8 +6,10 @@ import { MAX_OVERVIEW_EDGES, overviewEdges } from "@/lib/overviewEdges";
 import { moduleSummary, type Workspace } from "@/lib/workspace";
 import { moduleQuestionCount } from "@/lib/workspaceBrief";
 import { ModuleCard, type ModuleNode } from "./ModuleCard";
+import { ModuleEdge, type ModuleEdgeType } from "./ModuleEdge";
 
 const NODE_TYPES = { modul: ModuleCard };
+const EDGE_TYPES = { modul: ModuleEdge };
 
 const ARIA = {
   "node.a11yDescription.default": "Trykk Enter for å velge modulen. Piltaster flytter den. Tab videre til «Åpne» for å gå inn.",
@@ -34,15 +36,18 @@ const toNodes = (ws: Workspace, onOpen: (id: string) => void, onRemove: (id: str
     };
   });
 
-/** Kjent retning: heltrukket med pilhode. Ukjent: stiplet uten. */
-const toEdges = (ws: Workspace): Edge[] =>
+/** Kjent retning: heltrukket med pilhode. Ukjent: stiplet uten. Fester seg i siden som vender mot den andre. */
+const toEdges = (ws: Workspace): ModuleEdgeType[] =>
   overviewEdges(ws).map((e) => ({
     id: e.id,
+    type: "modul",
     source: e.source,
     target: e.target,
+    sourceHandle: e.sourceSide,
+    targetHandle: e.targetSide,
     label: e.label,
     markerEnd: e.known ? { type: MarkerType.ArrowClosed } : undefined,
-    style: e.known ? { strokeWidth: 1.75 } : { strokeWidth: 1.75, strokeDasharray: "6 4" },
+    data: { offset: e.offset, known: e.known },
   }));
 
 /** Oversikten: hver modul er én boks, grensesnittene er pilene. */
@@ -76,6 +81,7 @@ export function OverviewCanvas({ actions, onRemoveModule, onTruncated }: Props) 
       nodes={nodes}
       edges={edges}
       nodeTypes={NODE_TYPES}
+      edgeTypes={EDGE_TYPES}
       onNodesChange={onNodesChange}
       onNodeDragStart={() => {
         dragging.current = true;

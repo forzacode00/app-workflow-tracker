@@ -152,3 +152,21 @@ ikke kan peke, og at etiketter på piler er tekstnoder. QA bekreftet at alle run
 3. Kun `VITE_SUPABASE_URL` og publishable-nøkkel i klient, som GitHub Actions-variabler. Service-role bare i function secrets.
 4. Edge function for «Hva mangler?» validerer med `supabase.auth.getUser()`, zod med samme tak, rate-limit, CORS låst til Pages-domenet.
 5. Innlogging kun på invitasjon, og størrelsesgrense på lagret JSON server-side.
+
+### Manuell sjekk etter runde 3
+Skjermbilder tatt med `npx tsx e2e/skjermbilder.ts <mappe>` (Chromium, lys og mørk, 360 px og 1280 px,
+tom modul, eksempelmodul, oversikt og brief). Sett gjennom: tokens holder i mørk modus, også etiketter på
+piler og modulkort. Oversikten viser én pil hver vei mellom eksempelets to moduler, med hver sin etikett,
+festet i sidene som vender mot hverandre. Mobil: to rader header med eksempelet, tre på tomt lerret før
+siste retting (nå to). Hint viker for zoom-knappene. Tab-rekkefølge i oversikten er bekreftet av
+førstegangsbrukeren i runde 3: modul → Fjern → Åpne → neste modul.
+
+### Fra førstegangsbrukeren i runde 3, rettet
+- Mer luft mellom moduler i oversikten, og pilene forskyves når de går begge veier.
+- «+ Resultat» også fra regel-panelet.
+- Panorering når en valgt boks ligger bak panelet.
+- Angre-vindu på 10 sekunder når meldingen har en handling.
+
+### Ikke rettet, bevisst
+- Regel-panelet tilbyr fortsatt ikke alle typer; paletten gjør det.
+- Mobil-header er to rader. Én rad ville krevd at modulvelgeren forsvant.

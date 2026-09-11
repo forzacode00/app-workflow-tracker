@@ -15,7 +15,7 @@ export type ModuleCardData = {
 };
 export type ModuleNode = Node<ModuleCardData, "modul">;
 
-/* Håndtakene ankrer pilene, men kan ikke brukes: grensesnitt lages inne i modulen. */
+/* Håndtak på begge sider, så pilen fester seg i siden som vender mot den andre modulen. De kan ikke brukes: grensesnitt lages inne i modulen. */
 const HANDLE = "!opacity-0 !pointer-events-none";
 
 /** Én modul i oversikten. «Åpne» går inn i modulen, «Fjern» tar den bort (kan angres). */
@@ -29,7 +29,8 @@ export const ModuleCard = memo(function ModuleCard({ id, data, selected }: NodeP
         selected && "ring-2 ring-ring ring-offset-2 ring-offset-background",
       )}
     >
-      <Handle type="target" position={Position.Left} className={HANDLE} />
+      <Handle id="venstre" type="target" position={Position.Left} className={HANDLE} />
+      <Handle id="hoyre" type="target" position={Position.Right} className={HANDLE} />
       <span className="block text-[11.5px] font-semibold tracking-[0.08em] text-primary uppercase">Modul{data.eksempel ? " · eksempel" : ""}</span>
       <span className="block text-[15px] leading-snug font-bold">{data.navn}</span>
       {data.maal && data.maal !== data.navn && <span className="mt-1 line-clamp-2 block text-xs text-secondary-foreground">{data.maal}</span>}
@@ -66,7 +67,8 @@ export const ModuleCard = memo(function ModuleCard({ id, data, selected }: NodeP
           </Button>
         </div>
       </div>
-      <Handle type="source" position={Position.Right} className={HANDLE} />
+      <Handle id="venstre" type="source" position={Position.Left} className={HANDLE} />
+      <Handle id="hoyre" type="source" position={Position.Right} className={HANDLE} />
     </div>
   );
 });

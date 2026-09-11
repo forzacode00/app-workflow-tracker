@@ -104,17 +104,21 @@ export default function App() {
             Oversikt
           </Button>
           {many && !overview && (
-            <Select aria-label="Modul" options={moduleOptions} value={ws.aktiv} onValueChange={actions.switchModule} className="min-h-10 w-[160px] py-1" />
+            <div className="w-[160px]">
+              <Select aria-label="Modul" options={moduleOptions} value={ws.aktiv} onValueChange={actions.switchModule} className="min-h-10 py-1" />
+            </div>
           )}
           {!overview && (
-            <Input
-              aria-label="Navn på modulen"
-              placeholder="Navn på modulen"
-              value={module.navn}
-              onChange={(e) => actions.setName(e.target.value)}
-              maxLength={SHORT}
-              className={`min-h-10 w-[170px] border-transparent bg-transparent px-2 hover:border-input focus-visible:border-input sm:w-[200px] ${many ? "hidden lg:block" : ""}`}
-            />
+            <div className={`w-[170px] sm:w-[200px] ${many ? "hidden lg:block" : ""}`}>
+              <Input
+                aria-label="Navn på modulen"
+                placeholder="Navn på modulen"
+                value={module.navn}
+                onChange={(e) => actions.setName(e.target.value)}
+                maxLength={SHORT}
+                className="min-h-10 border-transparent bg-transparent px-2 hover:border-input focus-visible:border-input"
+              />
+            </div>
           )}
           {isExample && !overview && (
             <span className="hidden rounded-full bg-primary-soft px-2 py-0.5 text-[11.5px] font-semibold text-primary sm:inline">Eksempel, ikke dine data</span>
@@ -122,18 +126,22 @@ export default function App() {
         </div>
         <div className="flex flex-wrap gap-2">
           {!isExample && !many && !overview && (
-            <Button size="sm" className={onlySeed ? "" : "hidden sm:inline-flex"} onClick={() => { actions.loadExample(); show("Eksempelet er lastet: to moduler som snakker sammen.", undoAction); }}>
-              Vis eksempel
-            </Button>
+            <div className={onlySeed ? "" : "hidden sm:block"}>
+              <Button size="sm" onClick={() => { actions.loadExample(); show("Eksempelet er lastet: to moduler som snakker sammen.", undoAction); }}>
+                Vis eksempel
+              </Button>
+            </div>
           )}
           {overview ? (
             <Button size="sm" onClick={newModule}>
               + Ny modul
             </Button>
           ) : (
-            <Button size="sm" onClick={startNew} className={isExample ? "" : "hidden sm:inline-flex"}>
-              {isExample ? "Start egen modul" : "Tøm modulen"}
-            </Button>
+            <div className={isExample ? "" : "hidden sm:block"}>
+              <Button size="sm" onClick={startNew}>
+                {isExample ? "Start egen modul" : "Tøm modulen"}
+              </Button>
+            </div>
           )}
           <Button size="sm" onClick={() => setBriefOpen(true)} aria-haspopup="dialog" title={questions > 0 ? `${questions} åpne spørsmål i briefen` : undefined}>
             Vis brief
@@ -165,7 +173,7 @@ export default function App() {
           <ReactFlowProvider>
             <OverviewCanvas actions={actions} onRemoveModule={removeModule} onTruncated={onTruncated} />
           </ReactFlowProvider>
-          <p className="pointer-events-none absolute top-3 left-1/2 m-0 w-[min(92%,520px)] -translate-x-1/2 rounded-md border border-border bg-card/95 px-3 py-2 text-center text-[13px] text-secondary-foreground shadow-sm">
+          <p className="pointer-events-none absolute top-3 right-3 left-3 m-0 rounded-md border border-border bg-card/95 px-3 py-2 text-center text-[13px] text-secondary-foreground shadow-sm sm:right-auto sm:left-1/2 sm:w-[min(92%,520px)] sm:-translate-x-1/2">
             {many
               ? "Hver boks er en modul, pilene er grensesnitt i dataenes retning. «Åpne» går inn. "
               : "Én modul så langt. «+ Ny modul» lager den neste. "}
@@ -183,7 +191,7 @@ export default function App() {
               <FlowCanvas actions={actions} onRemoved={onRemoved} moduleNames={moduleNames} />
             </ReactFlowProvider>
             {onlySeed && (
-              <p className="pointer-events-none absolute top-3 left-1/2 m-0 w-[min(92%,440px)] -translate-x-1/2 rounded-md border border-border bg-card/95 px-3 py-2 text-center text-[13px] text-secondary-foreground shadow-sm">
+              <p className="pointer-events-none absolute top-3 right-14 left-3 m-0 rounded-md border border-border bg-card/95 px-3 py-2 text-center text-[13px] text-secondary-foreground shadow-sm sm:right-auto sm:left-1/2 sm:w-[min(92%,440px)] sm:-translate-x-1/2">
                 Skriv hva du vil oppnå i feltet «Tittel», og trykk <strong>Enter</strong> eller <strong>+</strong> for det neste.
                 {!many && " Usikker? Trykk «Vis eksempel»."}
               </p>
