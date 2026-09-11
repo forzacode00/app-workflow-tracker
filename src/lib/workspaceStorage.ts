@@ -8,6 +8,8 @@ export const BACKUP_KEY = "flytdesigner:v3:backup";
 /** Nøkkelen det gamle kartet (v2) lå under. Leses bare for løfting. */
 export const V2_KEY = "flytdesigner:v2";
 export const MAX_JSON_LENGTH = 2_000_000;
+/** Satt når brukeren har gått forbi velkomstskjermen én gang. */
+export const WELCOME_KEY = "flytdesigner:velkommen";
 
 export type ParseResult =
   | { ok: true; kind: "workspace"; workspace: Workspace }
@@ -131,6 +133,18 @@ export function saveWorkspace(ws: Workspace, storage: Store | null = getStorage(
     }
   }
   return true;
+}
+
+export function hasSeenWelcome(storage: StorageLike | null = getStorage()): boolean {
+  return storage ? read(storage, WELCOME_KEY) === "1" : true;
+}
+
+export function markWelcomeSeen(storage: Store | null = getStorage()): void {
+  try {
+    storage?.setItem(WELCOME_KEY, "1");
+  } catch {
+    // Får vi ikke lagret, vises velkomsten igjen neste gang. Ufarlig.
+  }
 }
 
 export const serializeWorkspace = (ws: Workspace): string => JSON.stringify(ws, null, 2);

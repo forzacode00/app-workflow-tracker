@@ -22,6 +22,17 @@ for (const scheme of ["light", "dark"] as const) {
     await page.goto(url);
     await page.evaluate(() => localStorage.clear());
     await page.reload();
+    await page.getByRole("button", { name: "Start med spørsmålene" }).waitFor();
+    await page.screenshot({ path: join(out, `${name}-${scheme}-velkommen.png`) });
+    await page.getByRole("button", { name: "Start med spørsmålene" }).click();
+    await page.getByLabel("Svar").fill("Svare kunder som ber om tilbud innen 24 timer");
+    await page.screenshot({ path: join(out, `${name}-${scheme}-intervju.png`) });
+    await page.getByRole("button", { name: "Neste" }).click();
+    await page.getByRole("button", { name: "Hopp over" }).click();
+    await page.getByLabel("Skriv ett om gangen").fill("Selger");
+    await page.keyboard.press("Enter");
+    await page.screenshot({ path: join(out, `${name}-${scheme}-intervju-liste.png`) });
+    await page.getByRole("button", { name: "Avbryt" }).click();
     await page.getByLabel("Tittel").waitFor();
     await page.screenshot({ path: join(out, `${name}-${scheme}-tom.png`) });
     await page.getByLabel("Tittel").fill("Færre e-poster om tilbud");
@@ -39,7 +50,7 @@ for (const scheme of ["light", "dark"] as const) {
     await page.getByRole("button", { name: "Oversikt" }).click();
     await page.waitForTimeout(600);
     await page.screenshot({ path: join(out, `${name}-${scheme}-oversikt.png`) });
-    await page.getByRole("button", { name: /^Vis brief/ }).click();
+    await page.getByRole("button", { name: /^Vis bestilling/ }).click();
     await page.waitForTimeout(300);
     await page.screenshot({ path: join(out, `${name}-${scheme}-brief.png`) });
     await ctx.close();

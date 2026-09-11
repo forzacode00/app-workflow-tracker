@@ -43,7 +43,10 @@ export function SlikTenkerDu({ open, onClose }: Props) {
             Lukk
           </Button>
         </div>
-        <p className="m-0 text-[13.5px] text-secondary-foreground">En modul er svaret på fem spørsmål. Boksene er bare spørsmålene, satt på et lerret.</p>
+        <p className="m-0 text-[13.5px] text-secondary-foreground">
+          Flytdesigner lager en bestilling til Claude ut fra det du beskriver. Det du beskriver, kalles en modul. Boksene på tegningen er
+          svarene på fem spørsmål, satt opp som et kart. Vil du heller bli spurt? «+ Ny modul» i oversikten stiller spørsmålene.
+        </p>
         <ol className="m-0 flex list-none flex-col gap-2 p-0">
           {TANKEMODELL.map((s, i) => (
             <li key={s} className="flex gap-3 text-[15px]">
@@ -60,7 +63,7 @@ export function SlikTenkerDu({ open, onClose }: Props) {
             </li>
           ))}
         </ul>
-        <p className="m-0 text-xs text-muted-foreground">Trykk «Vis eksempel» for å se to ferdige nettsteder. Briefen viser nederst hva som mangler.</p>
+        <p className="m-0 text-xs text-muted-foreground">Trykk «Vis eksempel» for å se to ferdige eksempler. Bestillingen viser øverst hva som mangler.</p>
       </div>
     </div>
   );

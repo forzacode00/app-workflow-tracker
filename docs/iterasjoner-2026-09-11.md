@@ -255,3 +255,58 @@ sammen med. Boksene er bare svarene på disse. Gjort i appen:
   eksempelet»).
 - Skjermbilder ved 360 px og 1280 px, lys og mørk, nå også dytt og hjelp: dyttet ligger over
   lerretet uten å dekke boksen, hjelpen ruller på mobil, tokens holder i mørk modus.
+
+## Runde 5: kollegaen skjønte ingenting. Spørsmål først, kart etterpå.
+
+Magnus lot en kollega prøve appen. Han forsto ikke hva den skulle brukes til. Det er en annen feil
+enn de forrige rundene rettet: problemet lå foran alle hintene. Første skjerm var et tomt lerret med
+én boks, ni fagord i paletten og en header med «Oversikt», «Brief» og «Modul». Ingenting sa hva man
+får ut. Magnus bestemte: først en forklaring på hva appen er til for, så spørsmål, så kartet.
+
+### Det som er bygget
+- **Velkomstskjerm** (`Velkommen.tsx`) ved aller første besøk med tomt nettsted: én setning om hva
+  appen er til («Beskriv noe som er tungvint på jobben. Få en bestilling Claude kan bygge en app
+  fra»), de tre tingene som skjer i rekkefølge, og tre valg: «Start med spørsmålene», «Se et ferdig
+  eksempel», «Tegn selv på lerretet». Vises ikke igjen (flagg `flytdesigner:velkommen`), og aldri
+  når noe er lagret fra før.
+- **Intervju** (`Intervju.tsx`, ren logikk i `lib/intervju.ts`): elleve spørsmål ett om gangen, på
+  vanlig norsk, med hjelpetekst og eksempel. Fem må besvares (hva er tungvint, hvem, hva setter det
+  i gang, hva skjer så, hva kommer ut), resten kan hoppes over. Listespørsmål tar ett punkt om gangen
+  med Enter, og et lite valg der det trengs: «Hvem gjør det?» på hvert steg, «Gjelder i steget» på
+  regler, data og systemer, «Til hvem?» på resultater. Svarene blir en modul via `lib/bygg.ts`
+  (flyttet ut av `examples/`, utvidet med `hvem`, flere regler og resultater per steg, og
+  `eksempel: false`). Tekst med kolon deles i tittel og notat («Forespørselen: firma, e-post» blir
+  databoks med «Felter: …»).
+- **Etterpå:** `adoptModule` i hooken erstatter den tomme modulen på stedet, eller legger til en
+  ny. Toast: «Her er tegningen. Bestillingen ligger under «Vis bestilling»», med angre.
+- **Inngang overalt:** «+ Ny modul» i oversikten, «Start egen modul» i et eksempel og «Svar på
+  spørsmål i stedet» på tomt lerret går til intervjuet. «Tegn selv i stedet» finnes i intervjuet.
+- **Ord:** «brief» heter «bestilling» overalt brukeren ser det (knapper, skuff, toaster). Markdown-
+  overskriften «# Brief:» er beholdt, den er til Claude. «Slik tenker du» åpner med hva appen er til.
+
+### Tester og sjekk
+- 163 vitest (nye: `intervju.test.ts` for spørsmålslisten, `delTekst` og `tilModul` mot briefen;
+  App-tester for velkomst, intervju fra start til bestilling, avbryt, og at «+ Ny modul» går via
+  intervjuet), 8 Playwright (ny: velkomst og intervju ende til ende, med tall på bokser og piler).
+- Skjermbilder ved 360 px og 1280 px, lys og mørk: velkomst, spørsmål 1, listespørsmål med ett
+  punkt. Alt leselig, 44 px knapper, ingen horisontal scroll.
+
+### Førstegangsbrukeren prøvde den nye starten («reiseregninger som leveres for sent»)
+Forsto hva appen er til etter velkomsten, avgjort av trinn 3 («Du limer bestillingen inn i Claude»).
+Stoppet opp på: «Hva setter det i gang?» når ingenting gjør det i dag; om stegene er dagens eller
+ønsket flyt; nedtrekket «Appen gjør det selv» som standard på hvert steg; «Hva må dere huske
+underveis?» med skjemaspråk (data, felt); «modul» i siste spørsmål; «Enter går videre» som bare stemte
+på tre av elleve spørsmål; og utgangen: toasten sa hvor bestillingen lå, ikke hva man skulle gjøre,
+hadde «Angre» rett etter ti minutters svar, og «Kopier bestillingen» var skjult på mobil.
+Rettet: ny hjelpetekst på start og steg, «Ikke valgt» som standard og «Skjer automatisk» som eget
+valg, data-spørsmålet heter «Hva må appen holde styr på?», siste spørsmål «Hva vil du kalle dette?»,
+hint under knappene stemmer per spørsmål («Enter legger til», «Legg til minst ett»), toasten sier
+«Neste steg: trykk «Kopier bestillingen» og lim inn i Claude» uten angre, et hint på tegningen sier
+det samme til man trykker på en boks, dyttet holdes tilbake til da, «Kopier bestillingen» vises også
+på mobil, og «nettsted» er borte fra toastene. Ikke gjort: «nettsted» i oversikten og
+nettstedsbriefen, det er Magnus' eget begrep for helheten.
+
+### Magnus' merknad
+«En må trene bruken litt før man kaster den ut.» Enig. Anbefalt: Magnus går gjennom intervjuet
+selv med en ekte sak, så én kollega med Magnus ved siden av, før lenken sendes bredt. Det som
+stopper dem opp der, blir neste runde.

@@ -1,8 +1,8 @@
-import { OFFSET_Y, type FlowEdge, type FlowNode, type NodeType } from "../flow";
-import type { Module, Workspace } from "../workspace";
+import { OFFSET_Y, type FlowEdge, type FlowNode, type NodeType } from "./flow";
+import type { Module, Workspace } from "./workspace";
 
 /**
- * Liten byggekloss for eksempelmoduler: beskriv innholdet, få bokser med plass og piler.
+ * Byggekloss for moduler fra en beskrivelse (eksemplene, og intervjuet): beskriv innholdet, få bokser med plass og piler.
  * Kolonner: personer til venstre, mål i midten, start, steg (stablet), så det som henger på stegene.
  */
 export type ModulSpec = {
@@ -23,10 +23,16 @@ export type StegSpec = {
   tittel: string;
   notat?: string;
   regel?: [tittel: string, notat?: string];
+  /** Flere regler på samme steg. */
+  regler?: [tittel: string, notat?: string][];
+  /** Hvem (indeks i `personer`) som utfører steget. */
+  hvem?: number | number[];
   /** Hvilke databokser (indeks i `data`) steget bruker. */
   bruker?: number | number[];
   /** Resultatet steget gir. `til` er indeks i `personer` (hvem får det), `felter` er indeks i `data` (hva som sendes). */
   resultat?: { tittel: string; notat?: string; ref?: string; til?: number; felter?: number };
+  /** Flere resultater fra samme steg. */
+  resultater?: StegSpec["resultat"][];
   /** Hvilke systemer (indeks i `systemer`) steget snakker med. */
   system?: number | number[];
 };
@@ -35,7 +41,7 @@ const COL = { person: -300, maal: 0, start: 300, steg: 600, heng: 900, ekstra: 1
 const W_ROW = OFFSET_Y - 40;
 const list = (v: number | number[] | undefined): number[] => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
 
-export function bygg(spec: ModulSpec, plass: { x: number; y: number }): Module {
+export function bygg(spec: ModulSpec, plass: { x: number; y: number }, opts: { eksempel?: boolean } = {}): Module {
   const nodes: FlowNode[] = [];
   const edges: FlowEdge[] = [];
   let n = 0;
@@ -62,12 +68,14 @@ export function bygg(spec: ModulSpec, plass: { x: number; y: number }): Module {
     const steg = add("steg", s.tittel, s.notat, COL.steg, i * W_ROW);
     link(prev, steg);
     prev = steg;
-    if (s.regel) link(steg, add("regel", s.regel[0], s.regel[1], COL.heng, hengRow++ * W_ROW));
-    if (s.resultat) {
-      const r = add("resultat", s.resultat.tittel, s.resultat.notat, COL.heng, hengRow++ * W_ROW, s.resultat.ref);
+    for (const p of list(s.hvem)) if (personer[p]) link(steg, personer[p]!);
+    for (const regel of [...(s.regel ? [s.regel] : []), ...(s.regler ?? [])]) link(steg, add("regel", regel[0], regel[1], COL.heng, hengRow++ * W_ROW));
+    for (const res of [...(s.resultat ? [s.resultat] : []), ...(s.resultater ?? [])]) {
+      if (!res) continue;
+      const r = add("resultat", res.tittel, res.notat, COL.heng, hengRow++ * W_ROW, res.ref);
       link(steg, r);
-      if (s.resultat.til !== undefined && personer[s.resultat.til]) link(r, personer[s.resultat.til]!);
-      if (s.resultat.felter !== undefined && data[s.resultat.felter]) link(r, data[s.resultat.felter]!);
+      if (res.til !== undefined && personer[res.til]) link(r, personer[res.til]!);
+      if (res.felter !== undefined && data[res.felter]) link(r, data[res.felter]!);
     }
     for (const d of list(s.bruker)) if (data[d]) link(steg, data[d]!);
     for (const sy of list(s.system)) {
@@ -79,7 +87,7 @@ export function bygg(spec: ModulSpec, plass: { x: number; y: number }): Module {
   });
   (spec.sporsmal ?? []).forEach((q, i) => add("sporsmal", q, undefined, COL.person, personer.length * W_ROW + i * W_ROW + 40));
 
-  return { id: spec.id, navn: spec.navn, nodes, edges, eksempel: true, x: plass.x, y: plass.y };
+  return { id: spec.id, navn: spec.navn, nodes, edges, eksempel: opts.eksempel ?? true, x: plass.x, y: plass.y };
 }
 
 export const nettsted = (moduler: Module[]): Workspace => ({ versjon: 3, moduler, aktiv: moduler[0]!.id });

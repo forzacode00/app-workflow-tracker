@@ -51,12 +51,14 @@ vis testresultat). Tallet på «Vis brief»-knappen er antall åpne spørsmål.
 - Eksempler i «Vis eksempel» (tilbudsforespørsel med to moduler, CRM med fem), merket som eksempel.
   «Start egen modul» legger til en modul ved siden av; «Fjern eksempelet» i oversikten tømmer.
 - Tankemodellen i appen: plassholdere i spørsmålsform, «Neste:»-dytt med knapp, «Slik tenker du»,
-  åpne spørsmål øverst i brief-skuffen. Se `iterasjoner-2026-09-11.md`, runde 4.
+  åpne spørsmål øverst i bestillingsskuffen. Se `iterasjoner-2026-09-11.md`, runde 4.
+- Velkomstskjerm som sier hva appen er til, og intervju (elleve spørsmål ett om gangen) som tegner
+  modulen. Lerretet er resultatet, ikke utgangspunktet. «Brief» heter «bestilling» i UI. Runde 5.
 - Lagring i nettleseren (`flytdesigner:v2`). Kart fra det gamle skjemaet (v1) løftes automatisk.
 - Brief-skuff med kopiering og JSON-deling. Angre på tøm, eksempel og import.
 - Arbeidsområde med mange moduler, referanser mellom moduler, «Grensesnitt»-seksjon i briefen,
   brief for hele nettstedet, og oversiktsvisning med moduler og piler.
-- 153 vitest og 7 Playwright-tester.
+- 163 vitest og 8 Playwright-tester.
 
 ## Moduler og grensesnitt (krav fra Magnus, 2026-09-11)
 

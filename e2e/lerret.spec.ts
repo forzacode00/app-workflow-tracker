@@ -7,10 +7,46 @@ async function startOwn(page: Page, goal: string) {
   await page.goto("/");
   await page.evaluate((key) => localStorage.removeItem(key), STORAGE_KEY);
   await page.reload();
+  await page.getByRole("button", { name: "Tegn selv på lerretet" }).click();
   const title = page.getByLabel("Tittel");
   await expect(title).toBeFocused();
   await title.fill(goal);
 }
+
+test("velkomst og intervju: svarene blir bokser på lerretet, og bestillingen er klar", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Beskriv noe som er tungvint");
+  await page.getByRole("button", { name: "Start med spørsmålene" }).click();
+  const neste = page.getByRole("button", { name: /^(Neste|Hopp over)$/ });
+  await page.getByLabel("Svar").fill("Svare kunder innen 24 timer");
+  await neste.click();
+  await neste.click();
+  await page.getByLabel("Skriv ett om gangen").fill("Selger");
+  await page.keyboard.press("Enter");
+  await neste.click();
+  await page.getByLabel("Svar").fill("Kunden sender skjema");
+  await neste.click();
+  await page.getByLabel("Skriv ett om gangen").fill("Appen lagrer forespørselen");
+  await page.keyboard.press("Enter");
+  await page.getByLabel("Legg til ett til").fill("Selger svarer kunden");
+  await page.getByLabel("Hvem gjør det?").selectOption("0");
+  await neste.click();
+  await neste.click();
+  await neste.click();
+  await page.getByLabel("Skriv ett om gangen").fill("Bekreftelse på e-post");
+  await neste.click();
+  await neste.click();
+  await neste.click();
+  await page.getByRole("button", { name: "Vis tegningen" }).click();
+  // mål, person, start, 2 steg, resultat
+  await expect(page.locator(".react-flow__node")).toHaveCount(6);
+  await expect(page.locator(".react-flow__edge")).toHaveCount(6);
+  await expect.poll(async () => (await stored(page))?.moduler?.[0]?.nodes?.length ?? 0).toBe(6);
+  await page.getByRole("button", { name: /^Vis bestilling/ }).click();
+  await expect(page.getByLabel("Bestilling til Claude, kan rulles")).toContainText("2. **Selger svarer kunden**");
+});
 
 const stored = (page: Page) => page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? "null"), STORAGE_KEY);
 
@@ -68,8 +104,8 @@ test("trekk en pil fra én boks til en annen, og briefen viser koblingen", async
   const step = page.locator(".react-flow__node", { hasText: "Ta imot" });
   await connectBoxes(page, data, step);
   await expect(page.locator(".react-flow__edge")).toHaveCount(2);
-  await page.getByRole("button", { name: /^Vis brief/ }).click();
-  await expect(page.getByLabel("Brief til Claude, kan rulles")).toContainText("Bruker data: Forespørsel");
+  await page.getByRole("button", { name: /^Vis bestilling/ }).click();
+  await expect(page.getByLabel("Bestilling til Claude, kan rulles")).toContainText("Bruker data: Forespørsel");
 });
 
 test("Delete fjerner valgt boks med angre, men Backspace i tittelfeltet gjør det ikke", async ({ page }) => {
@@ -114,7 +150,7 @@ test("import av JSON viser boksene i utsnittet, og angre tar dem bort", async ({
   await page.getByRole("button", { name: "Fjern eksempelet" }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(1);
   await expect(page.getByLabel("Modul", { exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: /^Vis brief/ }).click();
+  await page.getByRole("button", { name: /^Vis bestilling/ }).click();
   await page.getByRole("tab", { name: "Del som JSON" }).click();
   await page.getByLabel("Nettstedet som JSON. Lim inn noe fra en kollega her for å importere det.").fill(json);
   await page.getByRole("button", { name: "Importer", exact: true }).click();

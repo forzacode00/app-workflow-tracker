@@ -236,6 +236,31 @@ export function useWorkspace() {
     [editWs],
   );
 
+  /** Tar inn en modul fra intervjuet. Er den aktive modulen tom, erstattes den på stedet; ellers legges den til. Kan angres. */
+  const adoptModule = useCallback(
+    (m: Module): boolean => {
+      const w0 = latest.current;
+      if (!isBlank(asFlow(activeModule(w0))) && w0.moduler.length >= MAX_MODULES) return false;
+      editWs(
+        (w) => {
+          const cur = activeModule(w);
+          if (isBlank(asFlow(cur))) {
+            return { ...w, moduler: w.moduler.map((x) => (x.id === cur.id ? { ...m, id: cur.id, x: cur.x, y: cur.y, eksempel: false } : x)), aktiv: cur.id };
+          }
+          if (w.moduler.length >= MAX_MODULES) return w;
+          const id = w.moduler.some((x) => x.id === m.id) ? newModuleId() : m.id;
+          return { ...w, moduler: [...w.moduler, { ...m, id, ...placeModule(w), eksempel: false }], aktiv: id };
+        },
+        { undoable: true },
+      );
+      setSelectedId(null);
+      setView("modul");
+      setGeneration((g) => g + 1);
+      return true;
+    },
+    [editWs],
+  );
+
   /** Fjerner en modul. Siste modul kan ikke fjernes, nettstedet tømmes i stedet. Kan angres. */
   const removeModule = useCallback(
     (id: string) => {
@@ -331,6 +356,7 @@ export function useWorkspace() {
       switchModule,
       addModule,
       insertModule,
+      adoptModule,
       removeModule,
       moveModules,
       replace,
@@ -338,7 +364,7 @@ export function useWorkspace() {
       loadExample,
       undo,
     }),
-    [ws, module, flow, view, generation, lastAdded, selected, selectedId, storage, setName, updateNode, moveNodes, addNode, removeNodes, connect, removeEdges, switchModule, addModule, insertModule, removeModule, moveModules, replace, reset, loadExample, undo],
+    [ws, module, flow, view, generation, lastAdded, selected, selectedId, storage, setName, updateNode, moveNodes, addNode, removeNodes, connect, removeEdges, switchModule, addModule, insertModule, adoptModule, removeModule, moveModules, replace, reset, loadExample, undo],
   );
 }
 

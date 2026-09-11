@@ -113,14 +113,14 @@ export function BriefDrawer({ open, initialTab = "modul", moduleLabel, onClose, 
   };
 
   return (
-    <div className="fixed inset-0 z-30 flex justify-end" role="dialog" aria-modal="true" aria-label="Brief til Claude">
-      <button type="button" aria-label="Lukk briefen" className="flex-1 bg-foreground/40" onClick={onClose} />
+    <div className="fixed inset-0 z-30 flex justify-end" role="dialog" aria-modal="true" aria-label="Bestilling til Claude">
+      <button type="button" aria-label="Lukk bestillingen" className="flex-1 bg-foreground/40" onClick={onClose} />
       <div className="flex w-full max-w-[640px] flex-col gap-3 bg-card p-4 shadow-xl sm:p-5">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-bold">Brief til Claude</h2>
+          <h2 className="text-lg font-bold">Bestilling til Claude</h2>
           <div className="flex gap-2">
             <Button variant="primary" size="sm" onClick={() => onCopy(currentText)}>
-              {tab === "json" ? "Kopier JSON" : "Kopier brief"}
+              {tab === "json" ? "Kopier JSON" : "Kopier bestillingen"}
             </Button>
             <Button ref={closeRef} size="sm" onClick={onClose}>
               Lukk
@@ -129,8 +129,8 @@ export function BriefDrawer({ open, initialTab = "modul", moduleLabel, onClose, 
         </div>
         <p className="m-0 text-[13px] text-secondary-foreground">
           {tab === "modul" &&
-            `Modulen «${moduleLabel}». ${questions === 0 ? "Ingen åpne spørsmål. " : `${questions} ${questions === 1 ? "åpent spørsmål" : "åpne spørsmål"} nederst i briefen. `}Lim den inn i Claude med «Bygg en MVP av denne modulen».`}
-          {tab === "nettsted" && "Alle modulene, grensesnittene mellom dem og en foreslått byggerekkefølge. Gi denne til Claude sammen med modulbriefen."}
+            `Modulen «${moduleLabel}». ${questions === 0 ? "Ingen åpne spørsmål. " : `${questions} ${questions === 1 ? "åpent spørsmål" : "åpne spørsmål"} nederst i bestillingen. `}Lim den inn i Claude med «Bygg en MVP av denne modulen».`}
+          {tab === "nettsted" && "Alle modulene, grensesnittene mellom dem og en foreslått byggerekkefølge. Gi denne til Claude sammen med bestillingen for modulen."}
           {tab === "json" && "Hele nettstedet. Kopier og send til en kollega; de limer inn her og trykker «Importer»."}
         </p>
         <div role="tablist" aria-label="Innhold i skuffen" className="flex gap-1 border-b border-border" onKeyDown={onTabKey}>
@@ -160,11 +160,11 @@ export function BriefDrawer({ open, initialTab = "modul", moduleLabel, onClose, 
               {questionList.slice(0, 5).map((q) => (
                 <li key={q}>{q}</li>
               ))}
-              {questionList.length > 5 && <li>… og {questionList.length - 5} til nederst i briefen.</li>}
+              {questionList.length > 5 && <li>… og {questionList.length - 5} til nederst i bestillingen.</li>}
             </ul>
           </div>
         )}
-        {tab === "modul" && <BriefView id="panel-modul" text={moduleBrief} label="Brief til Claude, kan rulles" />}
+        {tab === "modul" && <BriefView id="panel-modul" text={moduleBrief} label="Bestilling til Claude, kan rulles" />}
         {tab === "nettsted" && <BriefView id="panel-nettsted" text={workspaceBrief} label="Oversikt over nettstedet, kan rulles" />}
         {tab === "json" && (
           <div id="panel-json" role="tabpanel" aria-labelledby="fane-json" className="flex min-h-0 flex-1 flex-col gap-2">

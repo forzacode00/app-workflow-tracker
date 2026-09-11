@@ -1,5 +1,5 @@
 import { OVERVIEW_OFFSET_X, OVERVIEW_OFFSET_Y, type Workspace } from "../workspace";
-import { bygg, nettsted } from "./bygg";
+import { bygg, nettsted } from "../bygg";
 
 /**
  * Eksempel: et enkelt CRM for et konsulentselskap, som fem moduler som snakker sammen.

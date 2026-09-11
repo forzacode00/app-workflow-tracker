@@ -20,10 +20,12 @@ Produksjonsbygget får en Content-Security-Policy som meta-tag (`vite.config.ts`
     tankemodellen, brukes som dytt over lerretet). Appen bruker `buildModuleBrief`.
   - `overviewEdges.ts`: pilene i oversikten, sammenslått per retning, uten React Flow-import.
   - `workspace.ts`: arbeidsområde v3 (`Workspace` = moduler + aktiv), `interfaces()` avleder grensesnitt fra `ref`,
-    `tidyWorkspace`, `moduleSummary`, `moduleById`. `workspaceStorage.ts`: localStorage `flytdesigner:v3`, løfter v2/v1, backup.
+    `tidyWorkspace`, `moduleSummary`, `moduleById`. `workspaceStorage.ts`: localStorage `flytdesigner:v3`, løfter v2/v1, backup, `flytdesigner:velkommen` (velkomsten er sett).
     `workspaceBrief.ts`: modulbrief med grensesnitt-seksjon, brief for hele nettstedet, `buildOrder`.
+  - `bygg.ts`: beskriv en modul (mål, personer, start, steg med regler/data/resultat/system), få bokser med plass og piler.
+    Brukes av intervjuet og eksemplene. `intervju.ts`: spørsmålene (`SPORSMAL`), svar-typen, `tilModul` (svar → modul via `bygg`).
   - `flowExample.ts` er byggekloss for `workspaceExample.ts` (eksempelet med to moduler). `examples/crm.ts` er CRM-eksempelet
-    (fem moduler), bygget med `examples/bygg.ts` (beskriv modulen, få bokser med plass og piler). `EXAMPLES` i `useWorkspace.ts`
+    (fem moduler), bygget med `bygg.ts`. `EXAMPLES` i `useWorkspace.ts`
     lister eksemplene som «Vis eksempel»-menyen viser. `lib/examples/` bruker relative importer, så `scripts/` kan kjøre dem med tsx.
   - `flowStorage.ts`: v2-validering, brukes bare av `workspaceStorage`.
   - `migrateV1.ts`: løfter det gamle skjemaet (v1) til bokser. `lib/v1/` er det gamle skjemaet og finnes bare for
@@ -39,7 +41,8 @@ Produksjonsbygget får en Content-Security-Policy som meta-tag (`vite.config.ts`
   koblinger kommer alltid fra hooken),
   `NodeCard` (én boks, med «+» for å vokse), `NodePanel` (tittel, notat, type, legg til etter), `Palette`, `typeClass`.
   `components/overview/`: `OverviewCanvas` og `ModuleCard` (nettstedet: moduler og grensesnitt).
-  `BriefDrawer` viser åpne spørsmål, modulbrief, nettstedsbrief og JSON-deling. `SlikTenkerDu` er tankemodellen (fem spørsmål,
+  `Velkommen` (første skjerm: hva appen er til, tre valg) og `Intervju` (ett spørsmål om gangen, svarene blir en modul via
+  `adoptModule` i hooken). `BriefDrawer` viser åpne spørsmål, modulbrief, nettstedsbrief og JSON-deling. I UI heter briefen «bestilling». `SlikTenkerDu` er tankemodellen (fem spørsmål,
   vanlige feil) bak «?» i headeren. `components/ui/` er håndskrevne shadcn-lignende basiskomponenter.
 - Filnavn: PascalCase for komponenter, camelCase for hooks og lib. Tester ligger ved siden av filen de tester.
 - Semantiske fargetokens i `src/index.css`, inkludert én farge per bokstype (`--node-*`). Ingen palettfarger i JSX.
@@ -54,7 +57,7 @@ Produksjonsbygget får en Content-Security-Policy som meta-tag (`vite.config.ts`
 ## Porter før «ferdig»
 `npm run lint` · `npm run typecheck` · `npm test` · `npm run build` · `npm run e2e`
 Ved UI-endring: `npx tsx e2e/skjermbilder.ts <mappe> http://127.0.0.1:8080/` tar skjermbilder ved 360 px og 1280 px i lys og
-mørk modus (tom modul, eksempel, oversikt, brief). Se gjennom dem før «ferdig».
+mørk modus (velkomst, intervju, tom modul, eksempel, oversikt, bestilling). Se gjennom dem før «ferdig».
 
 ## Avvik og fallgruver
 - React Flow i jsdom trenger stubber (ResizeObserver, DOMMatrixReadOnly, offsetWidth). De ligger i `src/test/setup.ts`.
