@@ -1,94 +1,117 @@
-import { useMemo } from "react";
-import { FormPanel } from "@/components/FormPanel";
-import { PreviewPanel } from "@/components/PreviewPanel";
+import { ReactFlowProvider } from "@xyflow/react";
+import { useCallback, useMemo, useState } from "react";
+import { BriefDrawer } from "@/components/BriefDrawer";
+import { FlowCanvas } from "@/components/canvas/FlowCanvas";
+import { NodePanel } from "@/components/canvas/NodePanel";
+import { Palette } from "@/components/canvas/Palette";
 import { Toast } from "@/components/Toast";
 import { Button } from "@/components/ui/Button";
 import { useClipboard } from "@/hooks/useClipboard";
+import { useFlow } from "@/hooks/useFlow";
 import { useToast } from "@/hooks/useToast";
-import { useWorkflow } from "@/hooks/useWorkflow";
-import { buildBrief } from "@/lib/brief";
-import { checkWorkflow } from "@/lib/checks";
-import { readBackup } from "@/lib/storage";
-import { isBlank } from "@/lib/types";
+import { isBlank } from "@/lib/flow";
+import { buildFlowBrief, openQuestions } from "@/lib/flowBrief";
+import { readBackup } from "@/lib/flowStorage";
 
 export default function App() {
-  const actions = useWorkflow();
+  const actions = useFlow();
   const { toast, show, dismiss } = useToast();
   const copy = useClipboard();
+  const [briefOpen, setBriefOpen] = useState(false);
 
-  const brief = useMemo(() => buildBrief(actions.workflow), [actions.workflow]);
-  const checks = useMemo(() => checkWorkflow(actions.workflow), [actions.workflow]);
+  const brief = useMemo(() => buildFlowBrief(actions.flow), [actions.flow]);
+  const questions = useMemo(() => openQuestions(actions.flow).length, [actions.flow]);
   const backup = useMemo(() => (actions.storage.loadError ? readBackup() : null), [actions.storage.loadError]);
 
-  const undoAction = { label: "Angre", onClick: () => { if (actions.undo()) show("Flyten er hentet tilbake."); } };
+  const undoAction = { label: "Angre", onClick: () => { if (actions.undo()) show("Kartet er hentet tilbake."); } };
 
   const copyBrief = async () => {
     const ok = await copy(brief);
-    show(ok ? "Briefen er kopiert. Lim den inn i Claude." : "Kunne ikke kopiere automatisk. Bruk fanen «Rå tekst».");
+    show(ok ? "Briefen er kopiert. Lim den inn i Claude." : "Kunne ikke kopiere automatisk. Åpne briefen og marker teksten.");
   };
 
   const startNew = () => {
-    const wasEmpty = isBlank(actions.workflow) || actions.workflow.eksempel;
+    const wasBlank = isBlank(actions.flow) || actions.flow.eksempel;
     actions.reset();
-    document.getElementById("navn")?.focus();
-    if (wasEmpty) show("Klar. Start med navnet på flyten.");
-    else show("Flyten er tømt.", undoAction);
+    show(wasBlank ? "Klar. Begynn med målet: hva vil du oppnå?" : "Kartet er tømt.", wasBlank ? undefined : undoAction);
   };
 
-  const loadExample = () => {
-    actions.loadExample();
-    show("Eksempelet «Tilbudsforespørsel» er lastet.", undoAction);
-  };
-
-  const pct = checks.length ? Math.round((checks.filter((c) => c.status === "done").length / checks.length) * 100) : 0;
+  const closeBrief = useCallback(() => setBriefOpen(false), []);
+  const boxes = actions.flow.nodes.length;
 
   return (
-    <>
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-card px-4 py-3.5 sm:px-5">
-        <div className="flex flex-wrap items-baseline gap-3">
-          <h1 className="text-[22px] font-bold tracking-[-0.01em]">Flytdesigner</h1>
-          <span className="text-[13px] text-muted-foreground">Beskriv en arbeidsflyt. Få en brief Claude kan bygge fra.</span>
+    <div className="flex h-dvh flex-col overflow-hidden">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-card px-3 py-2 sm:px-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+          <h1 className="text-[20px] font-bold tracking-[-0.01em]">Flytdesigner</h1>
+          <input
+            aria-label="Navn på flyten"
+            placeholder="Navn på flyten"
+            value={actions.flow.navn}
+            onChange={(e) => actions.setName(e.target.value)}
+            maxLength={200}
+            className="min-h-10 min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 text-[15px] hover:border-input focus-visible:border-input focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:w-[260px] sm:flex-none"
+          />
+          {actions.flow.eksempel && (
+            <span className="rounded-full bg-primary-soft px-2 py-0.5 text-[11.5px] font-semibold text-primary">Eksempel, ikke dine data</span>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {!actions.workflow.eksempel && <Button onClick={loadExample}>Vis eksempel</Button>}
-          <Button onClick={startNew}>Start på nytt</Button>
-          <div className="hidden lg:block">
-            <Button variant="primary" onClick={copyBrief}>
-              Kopier brief
+          {!actions.flow.eksempel && (
+            <Button size="sm" onClick={() => { actions.loadExample(); show("Eksempelet er lastet.", undoAction); }}>
+              Vis eksempel
             </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="grid min-h-[calc(100vh-69px)] grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-        <main className="border-b border-border p-4 pb-24 sm:p-5 lg:border-r lg:border-b-0 lg:pb-5">
-          <FormPanel actions={actions} checks={checks} onStartOwn={startNew} />
-        </main>
-        <aside id="forhandsvisning" className="scroll-mt-2 p-4 pb-24 sm:p-5 lg:sticky lg:top-0 lg:max-h-screen lg:self-start lg:overflow-y-auto lg:pb-5">
-          <PreviewPanel
-            brief={brief}
-            checks={checks}
-            actions={actions}
-            backup={backup}
-            onImported={() => show("Flyten er importert.", undoAction)}
-          />
-        </aside>
-      </div>
-
-      {/* Hovedhandlingen må være innen rekkevidde på mobil, der forhåndsvisningen ligger under hele skjemaet. */}
-      <div className="fixed inset-x-0 bottom-0 z-10 flex items-center justify-between gap-3 border-t border-border bg-card px-4 py-2.5 lg:hidden">
-        <span className="text-sm text-secondary-foreground tabular-nums">{pct} % komplett</span>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => document.getElementById("forhandsvisning")?.scrollIntoView({ behavior: "smooth" })}>
-            Se brief
+          )}
+          <Button size="sm" onClick={startNew}>
+            {actions.flow.eksempel ? "Start egen flyt" : "Start på nytt"}
+          </Button>
+          <Button size="sm" onClick={() => setBriefOpen(true)} aria-haspopup="dialog">
+            Vis brief{questions > 0 && <span className="rounded-full bg-warning-soft px-1.5 text-[11px] font-semibold text-warning tabular-nums">{questions}</span>}
           </Button>
           <Button size="sm" variant="primary" onClick={copyBrief}>
             Kopier brief
           </Button>
         </div>
+      </header>
+
+      {(actions.storage.loadError || actions.storage.saveFailed) && (
+        <p role="alert" className="m-0 border-b border-warning bg-warning-soft px-4 py-2 text-sm text-warning">
+          {actions.storage.loadError
+            ? `Det som lå lagret i denne nettleseren kunne ikke leses. ${actions.storage.loadError} En kopi ligger under «Vis brief» → «Del som JSON».`
+            : "Nettleseren lar oss ikke lagre. Kopier JSON under «Vis brief» før du lukker siden."}
+        </p>
+      )}
+
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <div className="relative min-h-0 flex-1">
+          <ReactFlowProvider>
+            <FlowCanvas actions={actions} />
+          </ReactFlowProvider>
+          {boxes <= 1 && !actions.flow.eksempel && (
+            <p className="pointer-events-none absolute top-3 left-1/2 m-0 w-[min(92%,420px)] -translate-x-1/2 rounded-md border border-border bg-card/95 px-3 py-2 text-center text-[13px] text-secondary-foreground shadow-sm">
+              Start med målet. Klikk på boksen, skriv én setning, og trykk <strong>+</strong> for å legge til det neste.
+            </p>
+          )}
+          <div className="absolute bottom-3 left-1/2 max-w-[calc(100%-1.5rem)] -translate-x-1/2">
+            <Palette hasSelection={actions.selected !== null} onAdd={(t) => actions.addNode(t, actions.selectedId)} />
+          </div>
+        </div>
+        {actions.selected && (
+          <NodePanel node={actions.selected} actions={actions} />
+        )}
       </div>
 
+      <BriefDrawer
+        open={briefOpen}
+        onClose={closeBrief}
+        brief={brief}
+        questions={questions}
+        actions={actions}
+        backup={backup}
+        onCopy={copyBrief}
+        onImported={() => { show("Flyten er importert.", undoAction); setBriefOpen(false); }}
+      />
       <Toast toast={toast} onDismiss={dismiss} />
-    </>
+    </div>
   );
 }

@@ -1,75 +1,74 @@
 # Flytdesigner: konsept og veikart
 
-Skrevet 2026-09-11.
+Skrevet 2026-09-11. Oppdatert samme dag etter at Magnus prøvde første versjon.
 
 ## Problemet
 
 Involved Consulting har ingen utviklere eller designere. Kollegene vet hva de trenger, men når de
 beskriver det for Claude blir resultatet feil, fordi beskrivelsen mangler det en utvikler ville
-spurt om: trigger, felttyper, hvem som eier dataene, reglene, hva som er utenfor scope, og hvordan
+spurt om: hva som starter flyten, hvem som eier dataene, reglene, hva som er utenfor scope, og hvordan
 den nye tingen henger sammen med det vi allerede har laget.
 
-## Løsningen
+## Løsningen: et kart som vokser
 
-Et skjema som tvinger fram en komplett beskrivelse, og som produserer en brief Claude bygger fra.
-Verktøyet er rent arbeidsflyt-orientert. Det spør aldri om skjermbilder eller teknologi, bare om
-input, data, regler, output og koblinger. Utseende og stack er Claudes jobb.
+Første versjon var et skjema i sju deler. Magnus' tilbakemelding: for mye informasjon, for
+steg-for-steg. Man skal kunne starte smått og la det vokse.
 
-### De sju delene
+Derfor er appen nå et fritt lerret. Du starter med én boks, målet, og legger til det neste fra den.
+Hver boks har en type, en tittel og ett notat. Ikke mer. Pilene mellom boksene er strukturen:
+rekkefølgen på stegene, hvilken regel som hører til hvilket steg, hvilke data et steg bruker.
 
-| Del | Spørsmålet | Blir til i briefen |
+### Bokstypene
+
+| Type | Spørsmålet den svarer på | I briefen |
 |---|---|---|
-| Formål | Hva er problemet, hvordan vet vi at det virker? | Innledning og akseptansekriterier |
-| Aktører og start | Hvem bruker den, hva setter den i gang? | Roller og trigger |
-| Inputs | Hva kommer inn, av hvilken type, fra hvor, påkrevd? | Felttabell |
-| Data | Hvilke «ting» må huskes, hvem eier dem, hvor lagres de? | Datamodell |
-| Steg og regler | Hva skjer i rekkefølge, hvilke «hvis … så»? | Nummerert flyt med regler |
-| Outputs | Hva kommer ut, i hvilket format, til hvem? | Output-tabell |
-| Koblinger | Hvilke andre flyter og systemer, hvilken retning? Hva er utenfor scope? | Integrasjoner og avgrensning |
+| Mål | Hva vil du oppnå, og hvordan vet du at det er løst? | Innledning |
+| Person | Hvem bruker flyten? Intern/ekstern, innlogging, hva de ser | Personer og roller |
+| Start | Hva setter flyten i gang? | Det som starter flyten |
+| Steg | Én ting som skjer, og hvem som gjør det | Nummerert liste etter pilene |
+| Regel | «Når … skal …», med eksempel og hva som skjer hvis det ikke går | Under steget den henger på |
+| Data | Noe som må huskes, med felter, eier og statuser | Datamodell |
+| Resultat | Det noen sitter igjen med, til hvem, når | Resultater |
+| System | En app eller flyt dere allerede har. Skal ikke endres | Koblinger |
+| Spørsmål | Det dere ikke vet ennå | Åpne spørsmål, først i listen |
 
-Briefen avslutter med faste krav til bygget (norsk UI, mobil først, tilgjengelighet, validering,
-roller styrer tilgang, README). Disse speiler `Code/CLAUDE.md`, slik at det Claude bygger fra en
-brief følger samme standard som resten av kodebasen.
+Hver type vet hvilke typer som følger naturlig etter den («+» på boksen legger til den første).
+Det er slik kartet vokser uten at brukeren må kjenne hele modellen på forhånd.
 
-### Komplett-sjekk
+### Briefen
 
-Hver del får status tom, påbegynt eller ferdig. «Ferdig» krever det minste Claude trenger:
-navn + type på hver input, minst to steg, mottaker på hver output, avgrensning satt. Prosenten
-øverst er andel ferdige deler. Den er en hjelp, ikke en sperre. Briefen kan kopieres når som helst.
+Skrives fra kartet, deterministisk. Brukerinnholdet rammes inn som beskrivelse, ikke instruksjoner,
+og escapes så det aldri lager nye overskrifter. Nederst kommer «Åpne spørsmål» (spørsmålsboksene,
+pluss det generatoren selv ser mangler: ingen start, ingen resultat, tomme eller frakoblede bokser)
+og «Krav til bygget» (antakelser først, Gitt/når/så, én test per regel, ikke rør koblede systemer,
+vis testresultat). Tallet på «Vis brief»-knappen er antall åpne spørsmål.
 
-## Det som er bygget (MVP, versjon 1, utbedret etter panel 2026-09-11)
+## Det som er bygget
 
-- Én side, alt lagres i nettleseren under nøkkelen `flytdesigner:v1`.
-- Eksempelflyt («Tilbudsforespørsel», bygget rundt fastpris-portalen) så første møte viser hva
-  et komplett svar ser ut som.
-- Live brief, kopier til utklippstavle, rå tekst som reserve.
-- JSON-eksport og -import for å dele en flyt mellom kolleger. Import valideres med zod.
-- Briefen rammer inn brukerinnholdet som beskrivelse, escaper Markdown-struktur, samler alt uavklart under «Åpne spørsmål» og gir Claude konkrete krav (antakelser først, én test per kriterium og regel, vis testresultat).
-- Steg har «unntak», lagrede ting har «statuser og overganger», flyten har «det dere ikke vet ennå».
-- Uleselig lagret data overskrives aldri; kopi tas vare på. Angre på tømming, eksempel og import.
-- 58 tester: brief-generator, lagring/import, komplett-sjekk, hooken og rendertester. Se `docs/panel-2026-09-11.md`.
+- Fritt lerret med React Flow: dra, zoom, trekk piler, slett med Delete.
+- Sidepanel for valgt boks: tittel, notat, type, og knapper for å legge til det neste.
+- Palett nederst med alle typer. Legger til koblet fra valgt boks hvis noen er valgt.
+- Eksempelkart ved første besøk, merket som eksempel. «Start egen flyt» gir én målboks.
+- Lagring i nettleseren (`flytdesigner:v2`). Kart fra det gamle skjemaet (v1) løftes automatisk.
+- Brief-skuff med kopiering og JSON-deling. Angre på tøm, eksempel og import.
+- 78 tester: modell, migrering, brief, lagring, hooken og rendertester av appen.
 
 ## Veikart
 
-1. **Flere flyter per bruker.** I dag finnes én flyt om gangen. Liste med navn, opprettet og
-   komplett-prosent. Ny lagringsnøkkel `flytdesigner:v2` med migrering fra v1.
-2. **Koblinger som peker på faktiske flyter.** Når vi har flere flyter kan «Koblinger» velge fra
-   listen i stedet for fritekst, og briefen kan ta med et sammendrag av den koblede flyten.
-   Dette er kjernen i ønsket om at flytene skal henge sammen på tvers av apper.
+1. **Flere kart per bruker.** Liste med navn og antall åpne spørsmål. Bytte mellom kart.
+2. **System-bokser som peker på andre kart.** Når vi har flere kart, kan en systemboks velge et
+   annet kart, og briefen tar med et sammendrag av det. Dette er kjernen i «henger sammen på tvers».
 3. **Delt lagring.** Supabase med innlogging og RLS bundet til `auth.uid()`. Alle i selskapet ser
-   alle flyter, bare eier kan endre. Krever test som leser en annen brukers rad og forventer tomt svar.
-4. **Registrer eksisterende apper.** En liste over apper og systemer vi allerede har (fastpris-
-   portalen, Teams, SharePoint, regnskap) med hva de tilbyr av data, slik at koblinger blir
-   konkrete og gjenbrukbare.
-5. **Claude-hjelp i skjemaet.** «Foreslå steg» eller «finn hull» via en edge function som
-   validerer brukeren med `supabase.auth.getUser()`, med rate-limit. Ikke før 3 er på plass.
-6. **Eksport til fil.** Last ned briefen som `.md` og flyten som `.json`, i tillegg til kopiering.
+   alle kart, bare eier endrer. Krever test som leser en annen brukers rad og forventer tomt svar.
+4. **Registrer eksisterende apper.** En felles liste over systemer vi har, som systemboksen kan velge fra.
+5. **Claude-hjelp på kartet.** «Hva mangler?» via edge function som validerer brukeren med
+   `supabase.auth.getUser()`, med rate-limit. Ikke før 3 er på plass.
+6. **Last ned** briefen som `.md` og kartet som `.json` eller bilde.
 
 ## Bevisste valg
 
-- Norsk bokmål i hele UI-et, fordi brukerne er norske og briefen skal leses av kolleger før den
-  sendes til Claude. Briefen selv er også på norsk. Claude leser norsk fint.
-- Ingen «AI-generer beskrivelsen» i første versjon. Poenget er at kollegaen tenker gjennom
-  flyten. Hjelpen skal komme som spørsmål, ikke som ferdig tekst.
-- Ingen visuell flytdiagram-editor. Det er tidkrevende å bygge og tilfører lite for Claude.
-  En nummerert liste med regler er mer presis enn bokser og piler.
+- Én tittel og ett notat per boks. Struktur kommer fra piler og typer, ikke fra skjemafelt.
+- Norsk bokmål i hele UI-et og i briefen. Claude leser norsk fint.
+- Ingen «AI-generer kartet». Poenget er at kollegaen tenker gjennom flyten selv. Hjelp kommer som spørsmål.
+- Ingen automatisk layout. Friheten til å plassere er poenget. Nye bokser legges til høyre for
+  den de kommer fra, stablet under søsken, så det blir ryddig nok uten å låse noe.

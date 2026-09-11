@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, Ref } from "react";
 import { cn } from "@/lib/utils";
 
 type Variant = "primary" | "outline" | "ghost" | "danger";
@@ -17,11 +17,12 @@ const SIZES: Record<Size, string> = {
   sm: "min-h-11 px-3 py-1.5 text-sm sm:min-h-9",
 };
 
-type Props = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size };
+type Props = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size; ref?: Ref<HTMLButtonElement> };
 
-export function Button({ className, variant = "outline", size = "default", type = "button", ...props }: Props) {
+export function Button({ className, variant = "outline", size = "default", type = "button", ref, ...props }: Props) {
   return (
     <button
+      ref={ref}
       type={type}
       className={cn(
         "inline-flex shrink-0 items-center justify-center gap-2 rounded-md border font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50",

@@ -114,3 +114,74 @@
     }
   }
 }
+
+/* Farge per bokstype på lerretet. Én dempet nyanse per type, lesbar som ramme og som liten overskrift. */
+:root {
+  --node-maal: #0f766e;
+  --node-person: #6d4fa3;
+  --node-start: #1d6fb8;
+  --node-steg: #3d5a80;
+  --node-regel: #b45309;
+  --node-data: #2a7a4b;
+  --node-resultat: #a8326b;
+  --node-system: #5b6b73;
+  --node-sporsmal: #9a4a08;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --node-maal: #3fbfb2;
+    --node-person: #b39ddb;
+    --node-start: #6fb1e8;
+    --node-steg: #9db4d6;
+    --node-regel: #f0a04b;
+    --node-data: #6fcf97;
+    --node-resultat: #e98ab6;
+    --node-system: #a3b4bb;
+    --node-sporsmal: #f0a04b;
+  }
+}
+@theme inline {
+  --color-node-maal: var(--node-maal);
+  --color-node-person: var(--node-person);
+  --color-node-start: var(--node-start);
+  --color-node-steg: var(--node-steg);
+  --color-node-regel: var(--node-regel);
+  --color-node-data: var(--node-data);
+  --color-node-resultat: var(--node-resultat);
+  --color-node-system: var(--node-system);
+  --color-node-sporsmal: var(--node-sporsmal);
+}
+
+/* React Flow: bruk våre tokens for kontroller og kanter. */
+.react-flow__controls button {
+  background: var(--card);
+  color: var(--foreground);
+  border-bottom: 1px solid var(--border);
+  min-width: 36px;
+  min-height: 36px;
+}
+.react-flow__controls button:hover {
+  background: var(--subtle);
+}
+.react-flow__controls button svg {
+  fill: currentColor;
+}
+.react-flow__controls {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.react-flow__edge-path {
+  stroke: var(--muted-foreground);
+}
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:focus .react-flow__edge-path {
+  stroke: var(--ring);
+}
+.react-flow__arrowhead polyline {
+  stroke: var(--muted-foreground);
+  fill: var(--muted-foreground);
+}
+.react-flow__connectionline path {
+  stroke: var(--ring);
+}
