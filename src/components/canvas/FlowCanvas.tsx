@@ -13,7 +13,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { FlowActions } from "@/hooks/useFlow";
+import type { FlowActions } from "@/hooks/useWorkspace";
 import { removedEdgeIds, summarizeNodeChanges } from "@/lib/canvasChanges";
 import { NODE_META, type Flow, type NodeType } from "@/lib/flow";
 import { NodeCard, type CardNode } from "./NodeCard";
@@ -74,7 +74,7 @@ export function FlowCanvas({ actions, onRemoved }: Props) {
 
   /* Nytt kart (tøm, eksempel, import, angre): vis hele flyten. */
   useEffect(() => {
-    if (generation > 0) void fitView({ padding: 0.25, maxZoom: 1, duration: 200 });
+    if (generation > 0) void fitView({ padding: 0.25, maxZoom: 1, minZoom: 0.55, duration: 200 });
   }, [generation, fitView]);
 
   /* Ny boks utenfor utsnittet: panorer så den blir synlig, uten å endre zoom. */
@@ -161,7 +161,7 @@ export function FlowCanvas({ actions, onRemoved }: Props) {
         }}
         onPaneClick={() => select(null)}
         fitView
-        fitViewOptions={{ padding: 0.25, maxZoom: 1 }}
+        fitViewOptions={{ padding: 0.25, maxZoom: 1, minZoom: 0.55 }}
         minZoom={0.2}
         maxZoom={2}
         connectionRadius={40}
@@ -174,7 +174,7 @@ export function FlowCanvas({ actions, onRemoved }: Props) {
         aria-label="Lerret med flyten. Dra bokser, trekk piler mellom dem."
       >
         <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} className="!bg-background" color="var(--border)" />
-        <Controls showInteractive={false} position="bottom-right" className="!m-3 !shadow-none" />
+        <Controls showInteractive={false} position="top-right" className="!m-3 !shadow-none" />
       </ReactFlow>
     </div>
   );

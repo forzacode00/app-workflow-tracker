@@ -1,10 +1,10 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-const STORAGE_KEY = "flytdesigner:v2";
+const STORAGE_KEY = "flytdesigner:v3";
 /** Lagring er forsinket i appen (SAVE_DELAY_MS). Vent litt lenger før lagret verdi leses. */
 const SAVE_WAIT = 450;
 
-/** Start på nytt med tomt lerret, og skriv målet. */
+/** Start med tomt arbeidsområde, og skriv målet i den første modulen. */
 async function startOwn(page: Page, goal: string) {
   await page.goto("/");
   await page.evaluate((key) => localStorage.removeItem(key), STORAGE_KEY);
@@ -47,7 +47,7 @@ test("dra en boks: posisjonen lagres og overlever omlasting", async ({ page }) =
   await dragBy(page, box, 250, 120);
   await page.waitForTimeout(SAVE_WAIT);
   const saved = await stored(page);
-  const node = saved.nodes.find((n: { id: string }) => n.id === "maal");
+  const node = saved.moduler[0].nodes.find((n: { id: string }) => n.id === "maal");
   expect(node.x !== 0 || node.y !== 0).toBe(true);
   await page.reload();
   const after = await page.locator(".react-flow__node").first().boundingBox();
@@ -108,16 +108,30 @@ test("import av JSON viser boksene i utsnittet, og angre tar dem bort", async ({
   await page.waitForTimeout(SAVE_WAIT);
   const json = JSON.stringify(await stored(page));
   expect(json.length).toBeGreaterThan(1000);
-  await page.getByRole("button", { name: "Start egen flyt" }).click();
+  await page.getByRole("button", { name: "Start egen modul" }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(1);
   await page.getByRole("button", { name: /^Vis brief/ }).click();
   await page.getByRole("button", { name: "Del som JSON" }).click();
-  await page.getByLabel("Flyten som JSON. Lim inn en annen flyt her for å importere den.").fill(json);
-  await page.getByRole("button", { name: "Importer flyten" }).click();
+  await page.getByLabel("Arbeidsområdet som JSON. Lim inn noe fra en kollega her for å importere det.").fill(json);
+  await page.getByRole("button", { name: "Importer", exact: true }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(17);
   const visible = await page.locator(".react-flow__node").first().boundingBox();
   const pane = await page.locator(".react-flow__pane").boundingBox();
   expect((visible?.x ?? -1) >= (pane?.x ?? 0) && (visible?.y ?? -1) >= (pane?.y ?? 0)).toBe(true);
   await page.getByRole("button", { name: "Angre" }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(1);
+});
+
+test("oversikten viser modulene og grensesnittene, og åpner en modul", async ({ page }) => {
+  await startOwn(page, "Mål");
+  await page.getByRole("button", { name: "Vis eksempel" }).click();
+  await page.getByRole("button", { name: "Oversikt" }).click();
+  await expect(page.locator(".react-flow__node")).toHaveCount(2);
+  // Fire referanser, én av dem går begge veier: fem piler.
+  await expect(page.locator(".react-flow__edge")).toHaveCount(5);
+  await page.locator(".react-flow__node", { hasText: "Oppfølging etter tilbud" }).getByRole("button", { name: "Åpne" }).click();
+  await expect(page.getByLabel("Navn på modulen")).toHaveValue("Oppfølging etter tilbud");
+  await expect(page.locator(".react-flow__node")).toHaveCount(9);
+  await page.locator(".react-flow__node", { hasText: "Et tilbud får status" }).click();
+  await expect(page.getByLabel("Peker på en annen modul?")).toHaveValue("eks-tilbud");
 });

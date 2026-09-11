@@ -15,12 +15,13 @@ describe("App", () => {
     expect(screen.queryByText("Eksempel, ikke dine data")).not.toBeInTheDocument();
   });
 
-  it("«Vis eksempel» laster eksempelet med merking, og kan angres", async () => {
+  it("«Vis eksempel» laster to moduler, og kan angres", async () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole("button", { name: "Vis eksempel" }));
     expect(screen.getByText("Eksempel, ikke dine data")).toBeInTheDocument();
-    expect(screen.getByLabelText("Navn på flyten")).toHaveValue("Tilbudsforespørsel");
+    expect(screen.getByLabelText("Navn på modulen")).toHaveValue("Tilbudsforespørsel");
+    expect(screen.getByLabelText("Modul")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Angre" }));
     expect(screen.queryByText("Eksempel, ikke dine data")).not.toBeInTheDocument();
   });
@@ -50,12 +51,29 @@ describe("App", () => {
     expect(screen.getByText("Må")).toBeInTheDocument();
   });
 
-  it("«Endre type» bytter panelet", async () => {
+  it("«Endre type» bytter panelet, og Esc lukker det", async () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByText("Endre type"));
     await user.selectOptions(screen.getByLabelText("Type"), "regel");
     expect(screen.getByLabelText("Rediger regel")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByLabelText("Rediger regel")).not.toBeInTheDocument();
+  });
+
+  it("en start-boks kan peke på en annen modul, og det blir et grensesnitt i briefen og oversikten", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.type(screen.getByLabelText("Tittel"), "Modul A");
+    await user.click(screen.getByRole("button", { name: "Oversikt" }));
+    await user.click(screen.getByRole("button", { name: "+ Ny modul" }));
+    await user.type(screen.getByLabelText("Tittel"), "Modul B{Enter}");
+    await user.type(screen.getByLabelText("Tittel"), "Får data fra A");
+    await user.selectOptions(screen.getByLabelText("Peker på en annen modul?"), "m1");
+    await user.click(screen.getByRole("button", { name: /^Vis brief/ }));
+    expect(brief()).toHaveTextContent("**Denne modulen mottar fra «Modul A»** via start-boksen «Får data fra A»");
+    await user.click(screen.getByRole("button", { name: "Hele nettstedet" }));
+    expect(screen.getByLabelText("Oversikt over nettstedet, kan rulles")).toHaveTextContent("**Modul B ← Modul A**: Får data fra A");
   });
 
   it("melder fra når kopiering ikke er mulig", async () => {
@@ -66,24 +84,26 @@ describe("App", () => {
     expect(await screen.findByText("Kunne ikke kopiere automatisk. Åpne briefen og marker teksten.")).toBeInTheDocument();
   });
 
-  it("import: viser feil ved ugyldig JSON, løfter gammelt skjema, og kan angres", async () => {
+  it("import: feil ved ugyldig JSON, gammelt skjema blir ny modul, og kan angres", async () => {
     const user = userEvent.setup();
     render(<App />);
+    await user.type(screen.getByLabelText("Tittel"), "Min");
     await user.click(screen.getByRole("button", { name: /^Vis brief/ }));
     const dialog = screen.getByRole("dialog");
     await user.click(within(dialog).getByRole("button", { name: "Del som JSON" }));
-    const box = within(dialog).getByLabelText("Flyten som JSON. Lim inn en annen flyt her for å importere den.");
-    expect(within(dialog).getByRole("button", { name: "Importer flyten" })).toBeDisabled();
+    const box = within(dialog).getByLabelText("Arbeidsområdet som JSON. Lim inn noe fra en kollega her for å importere det.");
+    expect(within(dialog).getByRole("button", { name: "Importer" })).toBeDisabled();
     await user.clear(box);
     await user.paste("{nei");
-    await user.click(within(dialog).getByRole("button", { name: "Importer flyten" }));
+    await user.click(within(dialog).getByRole("button", { name: "Importer" }));
     expect(within(dialog).getByRole("alert")).toHaveTextContent("Dette er ikke gyldig JSON.");
     await user.clear(box);
     await user.paste(JSON.stringify(exampleWorkflow()));
-    await user.click(within(dialog).getByRole("button", { name: "Importer flyten" }));
-    expect(screen.getByLabelText("Navn på flyten")).toHaveValue("Tilbudsforespørsel");
-    expect(screen.getAllByText("Ta imot forespørsel").length).toBeGreaterThan(0);
+    await user.click(within(dialog).getByRole("button", { name: "Importer" }));
+    expect(screen.getByText("Lagt til som ny modul.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Navn på modulen")).toHaveValue("Tilbudsforespørsel");
+    expect(screen.getByLabelText("Modul")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Angre" }));
-    expect(screen.getByLabelText("Navn på flyten")).toHaveValue("");
+    expect(screen.queryByLabelText("Modul")).not.toBeInTheDocument();
   });
 });

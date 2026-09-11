@@ -99,6 +99,8 @@ export const flowNodeSchema = z.object({
   notat: z.string().max(LONG),
   x: coord,
   y: coord,
+  /** Id-en til en annen modul boksen peker på (start, resultat og system). */
+  ref: idSchema.optional(),
 });
 
 export const flowEdgeSchema = z.object({

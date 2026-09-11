@@ -29,6 +29,7 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<Car
         {node.tittel || meta.placeholder}
       </span>
       {node.notat && <span className="mt-0.5 line-clamp-2 block text-xs text-secondary-foreground">{node.notat}</span>}
+      {node.ref && <span className="mt-1 block text-[11px] font-medium text-primary">↔ Peker på en annen modul</span>}
       <Handle type="source" position={Position.Right} className={HANDLE} title="Trekk herfra for å koble til en annen boks" />
       {grow && (
         <button
@@ -41,9 +42,7 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<Car
           }}
           className={cn(
             "nodrag absolute -top-3.5 -right-3.5 flex size-8 items-center justify-center rounded-full border border-border bg-card text-lg leading-none text-foreground shadow-sm transition-opacity pointer-coarse:size-11 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-            selected
-              ? "opacity-100"
-              : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100",
+            selected ? "opacity-100" : "opacity-45 group-hover:opacity-100 focus-visible:opacity-100",
           )}
         >
           +

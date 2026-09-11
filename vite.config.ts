@@ -3,6 +3,9 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
+/* Stien har «/» på Linux (CI) og «\» på Windows. */
+const inNodeModules = (...pkgs: string[]) => new RegExp(`node_modules[\\\\/](${pkgs.join("|")})`);
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -19,8 +22,8 @@ export default defineConfig({
       output: {
         codeSplitting: {
           groups: [
-            { name: "reactflow", test: /node_modules[\/](@xyflow|d3-|zustand|classcat)/ },
-            { name: "react", test: /node_modules[\/](react|react-dom|scheduler)[\/]/ },
+            { name: "reactflow", test: inNodeModules("@xyflow", "d3-", "zustand", "classcat") },
+            { name: "react", test: inNodeModules("react[\\\\/]", "react-dom[\\\\/]", "scheduler[\\\\/]") },
           ],
         },
       },

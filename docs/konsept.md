@@ -51,7 +51,9 @@ vis testresultat). Tallet på «Vis brief»-knappen er antall åpne spørsmål.
 - Eksempelkart ved første besøk, merket som eksempel. «Start egen flyt» gir én målboks.
 - Lagring i nettleseren (`flytdesigner:v2`). Kart fra det gamle skjemaet (v1) løftes automatisk.
 - Brief-skuff med kopiering og JSON-deling. Angre på tøm, eksempel og import.
-- 78 tester: modell, migrering, brief, lagring, hooken og rendertester av appen.
+- Arbeidsområde med mange moduler, referanser mellom moduler, «Grensesnitt»-seksjon i briefen,
+  brief for hele nettstedet, og oversiktsvisning med moduler og piler.
+- 129 vitest og 6 Playwright-tester.
 
 ## Moduler og grensesnitt (krav fra Magnus, 2026-09-11)
 
@@ -62,14 +64,12 @@ hvert som modulene bygges, skal man kunne se hele nettstedet og grensesnittene m
 Konsekvens for modellen: et arbeidsområde har mange moduler (hver modul er et kart). En systemboks
 kan peke på en annen modul i stedet for fritekst, og en resultatboks i én modul kan være starten i
 en annen. Briefen for en modul får en «Grensesnitt»-seksjon (inn fra, ut til, hvilke data). En
-oversiktsvisning viser hver modul som én boks og grensesnittene som piler. Bygges i runde 2 av
-review-rundene.
+oversiktsvisning viser hver modul som én boks og grensesnittene som piler. Bygget i runde 2, se
+`iterasjoner-2026-09-11.md`.
 
 ## Veikart
 
-1. **Flere kart per bruker.** Liste med navn og antall åpne spørsmål. Bytte mellom kart.
-2. **System-bokser som peker på andre kart.** Når vi har flere kart, kan en systemboks velge et
-   annet kart, og briefen tar med et sammendrag av det. Dette er kjernen i «henger sammen på tvers».
+1. ~~Flere kart per bruker~~ og 2. ~~bokser som peker på andre kart~~: bygget som moduler og grensesnitt.
 3. **Delt lagring.** Supabase med innlogging og RLS bundet til `auth.uid()`. Alle i selskapet ser
    alle kart, bare eier endrer. Krever test som leser en annen brukers rad og forventer tomt svar.
 4. **Registrer eksisterende apper.** En felles liste over systemer vi har, som systemboksen kan velge fra.

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const DURATION_MS = 2600;
+const DURATION_MS = 4000;
 const DURATION_WITH_ACTION_MS = 8000;
 
 export type ToastAction = { label: string; onClick: () => void };

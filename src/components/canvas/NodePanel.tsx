@@ -4,38 +4,47 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
-import type { FlowActions } from "@/hooks/useFlow";
+import type { FlowActions } from "@/hooks/useWorkspace";
 import { NODE_META, NODE_TYPES, type FlowNode } from "@/lib/flow";
 import { cn } from "@/lib/utils";
+import { canRef, moduleName, type Module } from "@/lib/workspace";
 import { TYPE_CLASS } from "./typeClass";
 
 type Props = {
   node: FlowNode;
+  /** De andre modulene i arbeidsområdet, som boksen kan peke på. */
+  otherModules: Module[];
   actions: Pick<FlowActions, "updateNode" | "addNode" | "removeNodes" | "select">;
   onRemoved: (count: number) => void;
 };
 
 const TYPE_OPTIONS = NODE_TYPES.map((t) => ({ value: t, label: NODE_META[t].label }));
+const NO_REF = "";
 
-/** Panelet for den valgte boksen: tittel, «legg til etter», notat, type og fjern. */
-export function NodePanel({ node, actions, onRemoved }: Props) {
+/** Panelet for den valgte boksen: tittel, «legg til etter», notat, modulkobling, type og fjern. */
+export function NodePanel({ node, otherModules, actions, onRemoved }: Props) {
   const meta = NODE_META[node.type];
   const titleRef = useRef<HTMLInputElement>(null);
   const lastId = useRef<string | null>(null);
 
-  /* Ny boks: sett fokus på tittelen så man kan skrive med en gang. */
+  /* Ny valgt boks: sett fokus på tittelen så man kan skrive med en gang. */
   useEffect(() => {
     if (lastId.current !== node.id) {
       lastId.current = node.id;
-      if (!node.tittel) titleRef.current?.focus();
+      titleRef.current?.focus();
+      if (node.tittel) titleRef.current?.select();
     }
   }, [node.id, node.tittel]);
 
   const growType = meta.next[0];
+  const refOptions = [{ value: NO_REF, label: "Nei, dette er noe utenfor nettstedet" }, ...otherModules.map((m) => ({ value: m.id, label: moduleName(m) }))];
 
   return (
     <aside
       aria-label={`Rediger ${meta.label.toLowerCase()}`}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") actions.select(null);
+      }}
       className="order-2 flex max-h-[45vh] flex-col gap-3 overflow-y-auto border-t border-border bg-card p-4 lg:max-h-none lg:w-[340px] lg:border-t-0 lg:border-l"
     >
       <div className="flex items-start justify-between gap-2">
@@ -61,8 +70,6 @@ export function NodePanel({ node, actions, onRemoved }: Props) {
             if (e.key === "Enter" && growType) {
               e.preventDefault();
               actions.addNode(growType, node.id);
-            } else if (e.key === "Escape") {
-              actions.select(null);
             }
           }}
         />
@@ -85,17 +92,32 @@ export function NodePanel({ node, actions, onRemoved }: Props) {
         <Textarea id="node-notat" className="min-h-24" value={node.notat} onChange={(e) => actions.updateNode(node.id, { notat: e.target.value })} />
       </Field>
 
-      <details className="group">
+      {canRef(node.type) && (
+        <Field
+          id="node-ref"
+          label="Peker på en annen modul?"
+          hint={
+            otherModules.length
+              ? "Da blir dette et grensesnitt i briefen, og en pil i oversikten."
+              : "Lag flere moduler i oversikten, så kan denne boksen peke på en av dem."
+          }
+        >
+          <Select
+            id="node-ref"
+            options={refOptions}
+            value={node.ref ?? NO_REF}
+            onValueChange={(ref) => actions.updateNode(node.id, { ref: ref === NO_REF ? undefined : ref })}
+            disabled={otherModules.length === 0}
+          />
+        </Field>
+      )}
+
+      <details>
         <summary className="cursor-pointer text-sm font-semibold text-secondary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
           Endre type
         </summary>
         <div className="pt-2">
-          <Select
-            aria-label="Type"
-            options={TYPE_OPTIONS}
-            value={node.type}
-            onValueChange={(type) => actions.updateNode(node.id, { type })}
-          />
+          <Select aria-label="Type" options={TYPE_OPTIONS} value={node.type} onValueChange={(type) => actions.updateNode(node.id, { type })} />
         </div>
       </details>
 
