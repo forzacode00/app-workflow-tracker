@@ -10,78 +10,74 @@ Virker når: pipeline-tavlen stemmer med virkeligheten på mandagsmøtet, uten f
 
 ## Personer og roller
 
-- **Selger**: Eier sine egne muligheter.
-- **Daglig leder**: Ser alle.
+- **Selger**: Eier sine egne muligheter og ser alle.
+- **Daglig leder**: Ser og endrer alle.
 
 ## Det som starter modulen
 
-- **En mulighet registreres på en kontakt**: Selgeren velger et firma fra Kontakter og skriver hva muligheten gjelder.
+- **En mulighet registreres på et firma**: Selgeren velger firma og kontaktperson fra Kontakter og skriver hva muligheten gjelder. Henvendelser fra nettsiden kommer inn uten eier.
 
 ## Steg i modulen
 
-1. **Kvalifiser muligheten** Har de et behov, budsjett og en beslutningstaker? Henvendelser fra nettsiden starter her.
+1. **Selger tar en henvendelse uten eier** Første selger som trykker «Ta» blir eier.
    - Snakker med: Skjemaet på nettsiden
-   - Regel: Uten beslutningstaker blir muligheten liggende i «ny». Eksempel: «vet ikke hvem som bestemmer» gir ikke lov til å flytte til «kontaktet».
-2. **Sett fase, verdi og forventet dato**
+   - Regel: Henvendelser uten eier vises for alle selgere. Etter 2 virkedager uten eier varsles daglig leder.
+2. **Selger kvalifiserer muligheten** Har de et behov, budsjett og en beslutningstaker?
    - Bruker data: Mulighet
-   - Regel: Fasen «tilbud» krever verdi i kroner. Eksempel: 0 kr avvises.
-3. **Flytt muligheten mellom faser** Dra kortet på tavlen.
+   - Regel: Uten beslutningstaker kan ikke fasen flyttes fra «ny». Eksempel: mangler feltet beslutningstaker, er «kontaktet» sperret.
+3. **Selger setter fase, verdi og forventet dato**
+   - Bruker data: Mulighet
+   - Regel: Sannsynlighet følger fasen, men kan overstyres. ny 10 %, kontaktet 30 %, møte 60 %, tilbud 80 %. Fasen «tilbud» krever verdi i kroner; 0 kr avvises.
+   - Gir: Mulighet i fase tilbud
+4. **Selger flytter muligheten mellom faser** Dra kortet på tavlen. Når selgeren drar kortet til «tilbud», starter Tilbud-modulen. Tilbud setter aldri fasen selv.
    - Regel: Ingen aktivitet på 14 dager flagger muligheten. Vises gult på tavlen og i ukesrapporten.
-4. **Marker klar for tilbud**
-   - Gir: Mulighet klar for tilbud
-5. **Registrer vunnet eller tapt**
-   - Regel: Tapt krever en årsak fra en liste. Pris, tidspunkt, valgte konkurrent, ikke svar.
+5. **Utfall registreres** Vunnet eller tapt.
+   - Regel: Utfallet settes ett sted: fra Tilbud når det finnes et tilbud, ellers her. Akseptert tilbud = vunnet, avslått eller utløpt = tapt. Tapt krever årsak fra liste: pris, tidspunkt, valgte konkurrent, ikke svar.
    - Gir: Utfall på muligheten
 
 ## Regler og unntak
 
-- **Uten beslutningstaker blir muligheten liggende i «ny»**: Eksempel: «vet ikke hvem som bestemmer» gir ikke lov til å flytte til «kontaktet».
-- **Fasen «tilbud» krever verdi i kroner**: Eksempel: 0 kr avvises.
-- **Ingen aktivitet på 14 dager flagger muligheten**: Vises gult på tavlen og i ukesrapporten.
-- **Tapt krever en årsak fra en liste**: Pris, tidspunkt, valgte konkurrent, ikke svar.
+Alle regler står under steget de hører til.
 
 ## Data som lagres
 
 - **Mulighet**
-  - Felter: firma, tittel, fase, verdi, sannsynlighet, eier, forventet dato, tapt-årsak, sist aktivitet.
-  - Faser: ny → kontaktet → møte → tilbud → vunnet eller tapt. Kan gå bakover, men aldri fra vunnet/tapt.
+  - Felter: firma, kontaktperson, beslutningstaker (kontaktperson), tittel, hva kunden ba om, tjeneste, fase, verdi, sannsynlighet, eier, forventet dato, utfall, tapt-årsak, sist aktivitet.
+  - Faser: ny → kontaktet → møte → tilbud → vunnet eller tapt. Kan gå bakover, men aldri fra vunnet eller tapt.
+  - Brukes i steg: Selger kvalifiserer muligheten; Selger setter fase, verdi og forventet dato
 
 ## Resultater
 
-- **Mulighet klar for tilbud**: Kontakt, verdi og det kunden ba om. Tilbud-modulen tar over.
-- **Utfall på muligheten**: Vunnet eller tapt, med verdi og årsak. Går til rapporteringen.
+- **Mulighet i fase tilbud**: Felter som sendes: mulighet-id, firma, kontaktperson, verdi, hva kunden ba om, tjeneste.
+- **Utfall på muligheten**: Felter som sendes: mulighet-id, utfall, verdi, årsak, dato, selger.
 
 ## Koblinger til andre systemer
 
-- **Skjemaet på nettsiden**: Nye henvendelser kommer inn som muligheter i fase «ny», uten eier.
+- **Skjemaet på nettsiden**: Nye henvendelser kommer inn som muligheter i fase «ny», uten eier. Vi leser skjemaet, endrer det ikke.
 
 ## Grensesnitt mot andre moduler
 
-- **Denne modulen mottar fra «Kontakter»** via start-boksen «En mulighet registreres på en kontakt».
-  - Hva: Selgeren velger et firma fra Kontakter og skriver hva muligheten gjelder.
-  - Målet der: Ett sted for alle kunder og kontaktpersoner
-  - Starter der med: Noen registrerer et nytt firma
-  - Gir der: Kontaktkort med alt om firmaet
-- **Denne modulen sender til «Tilbud»** via resultat-boksen «Mulighet klar for tilbud».
-  - Hva: Kontakt, verdi og det kunden ba om. Tilbud-modulen tar over.
-  - Målet der: Sende et riktig tilbud på under en time
-  - Starter der med: En mulighet er klar for tilbud
-  - Gir der: Tilbud som PDF på e-post til kunden; Tilbud sendt; Svar på tilbudet
-- **Denne modulen sender til «Rapportering»** via resultat-boksen «Utfall på muligheten».
-  - Hva: Vunnet eller tapt, med verdi og årsak. Går til rapporteringen.
-  - Målet der: Mandagsmøtet starter med tall, ikke med spørsmål
-  - Starter der med: Hver mandag kl. 07, eller når en mulighet får utfall
-  - Gir der: Ukesrapport på e-post til daglig leder; Dashboard-side
-- **«Tilbud» mottar fra denne modulen** via sin start-boks «En mulighet er klar for tilbud». Kommer fra Muligheter med kontakt og verdi.
-- **«Tilbud» sender til denne modulen** via sin resultat-boks «Svar på tilbudet». Akseptert, avslått eller utløpt. Muligheter får utfallet.
-- **«Oppfølging» sender til denne modulen** via sin resultat-boks «Utfall etter oppfølging». Muligheter får vunnet, tapt eller utsatt.
-- **«Rapportering» mottar fra denne modulen** via sin start-boks «Hver mandag kl. 07, eller når en mulighet får utfall». Tidsstyrt for ukesrapporten, og løpende for tavlen.
+- **Mottar fra «Kontakter»**
+  - «En mulighet registreres på et firma» (start her). Selgeren velger firma og kontaktperson fra Kontakter og skriver hva muligheten gjelder. Henvendelser fra nettsiden kommer inn uten eier.
+  - Hvilke felter som utveksles er ikke beskrevet. Spør før du bygger.
+  - Målet i «Kontakter»: Ett sted for alle kunder og kontaktpersoner
+- **Sender til «Tilbud»**
+  - «Mulighet i fase tilbud» (resultat her). Felter som sendes: mulighet-id, firma, kontaktperson, verdi, hva kunden ba om, tjeneste. Data «Mulighet», se «Data som lagres».
+  - «En mulighet er i fase tilbud» (start i «Tilbud»). Kommer fra Muligheter med mulighet-id, firma, kontaktperson, verdi, hva kunden ba om og tjeneste.
+  - Målet i «Tilbud»: Sende et riktig tilbud på under en time
+- **Sender til «Rapportering»**
+  - «Utfall på muligheten» (resultat her). Felter som sendes: mulighet-id, utfall, verdi, årsak, dato, selger. Data «Mulighet», se «Data som lagres».
+  - «Hver mandag kl. 07, eller når en mulighet får utfall» (start i «Rapportering»). Tidsstyrt for ukesrapporten, og løpende for dashbordet. Utfall kommer fra Muligheter med mulighet-id, utfall, verdi, årsak, dato og selger.
+  - «Muligheter» (system i «Rapportering», leser herfra). Vi leser fase, verdi og sannsynlighet.
+  - Målet i «Rapportering»: Mandagsmøtet starter med tall, ikke med spørsmål
+- **Mottar fra «Tilbud»**
+  - «Svar på tilbudet» (resultat i «Tilbud»). Felter som sendes: tilbud-id, mulighet-id, svar (akseptert, avslått, utløpt, erstattet), årsak ved avslått (pris, tidspunkt, valgte konkurrent), dato. Data «Tilbud»: Felter: mulighet, firma, sendt til (kontaktperson), eier, linjer, sum uten mva, gyldig til, sendt dato, status, godkjent av, kommentar fra leder. Statuser: utkast → til godkjenning → godkjent → sendt → akseptert, avslått, utløpt eller erstattet. Til godkjenning → utkast når leder avslår.
 
-Modulene over bygges hver for seg. Bruk grensesnittene som beskrevet; ikke bygg inn deres logikk her.
+Hver kanal over er én kontrakt: samme feltnavn i begge moduler, den som sender eier feltene. Modulene bygges hver for seg; bruk kontrakten, ikke den andre modulens logikk.
 
 ## Åpne spørsmål
 
-- Skal sannsynlighet settes av selgeren, eller følge fasen automatisk?
+Ingen kjente. Si fra om du finner noen.
 
 ## Krav til bygget
 

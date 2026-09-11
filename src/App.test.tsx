@@ -24,17 +24,51 @@ describe("App", () => {
     expect(within(screen.getByLabelText("Modul")).getAllByRole("option")).toHaveLength(5);
   });
 
-  it("«Vis eksempel» laster to moduler, «Start egen modul» fjerner begge, og alt kan angres", async () => {
+  it("«Vis eksempel» laster to moduler; «Start egen modul» legger til en tredje ved siden av; «Fjern eksempelet» tømmer alt", async () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole("button", { name: "Vis eksempel" }));
     await user.click(screen.getByRole("menuitem", { name: /Tilbudsforespørsel/ }));
     expect(screen.getByText("Eksempel, ikke dine data")).toBeInTheDocument();
     expect(screen.getByLabelText("Navn på modulen")).toHaveValue("Tilbudsforespørsel");
-    expect(screen.getByLabelText("Modul")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Start egen modul" }));
+    expect(within(screen.getByLabelText("Modul")).getAllByRole("option")).toHaveLength(3);
+    expect(screen.getByLabelText("Tittel")).toHaveFocus();
+    await user.click(screen.getByRole("button", { name: "Oversikt" }));
+    /* Med en egen modul ved siden av er det ikke lenger bare et eksempel. */
+    expect(screen.queryByRole("button", { name: "Fjern eksempelet" })).not.toBeInTheDocument();
+  });
+
+  it("«Fjern eksempelet» i oversikten tømmer alt når alle modulene er eksempel", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: "Vis eksempel" }));
+    await user.click(screen.getByRole("menuitem", { name: /CRM/ }));
+    await user.click(screen.getByRole("button", { name: "Oversikt" }));
+    await user.click(screen.getByRole("button", { name: "Fjern eksempelet" }));
     expect(screen.queryByLabelText("Modul")).not.toBeInTheDocument();
     expect(screen.getByText("Eksempelet er fjernet. Skriv hva du vil oppnå.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Angre" }));
+    expect(within(screen.getByLabelText("Modul")).getAllByRole("option")).toHaveLength(5);
+  });
+
+  it("dytter til neste spørsmål i tankemodellen, og «?» åpner «Slik tenker du»", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    expect(screen.queryByText("Neste:")).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText("Tittel"), "Færre e-poster");
+    expect(screen.getByText("Hva setter det i gang?")).toBeInTheDocument();
+    const nudge = screen.getByText("Neste:").closest("div") as HTMLElement;
+    await user.click(within(nudge).getByRole("button", { name: "+ Start" }));
+    expect(screen.getByLabelText("Rediger start")).toBeInTheDocument();
+    /* En tom boks teller ikke som svart, så dyttet står til tittelen er skrevet. */
+    expect(nudge).toHaveTextContent("Hva setter det i gang?");
+    await user.type(screen.getByLabelText("Tittel"), "Kunden sender skjema");
+    expect(screen.getByText("Neste:").closest("div")).toHaveTextContent("Hvem bruker det?");
+    await user.click(screen.getByRole("button", { name: "Slik tenker du" }));
+    expect(screen.getByRole("dialog", { name: "Slik tenker du" })).toHaveTextContent("Hva vil du oppnå, og hvordan ser du at det virker?");
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Slik tenker du" })).not.toBeInTheDocument();
   });
 
   it("Enter i tittelen legger til neste boks, og briefen følger med", async () => {
@@ -48,6 +82,7 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: /^Vis brief/ }));
     expect(brief()).toHaveTextContent("# Brief: Færre e-poster");
     expect(brief()).toHaveTextContent("1. **Ta imot**");
+    expect(screen.getByText("Åpne spørsmål Claude vil stille:")).toBeInTheDocument();
   });
 
   it("Backspace i tittelfeltet fjerner ikke boksen, men «Fjern boksen» gjør det, med angre", async () => {
@@ -84,9 +119,9 @@ describe("App", () => {
     expect(screen.getByLabelText("Mottar fra en annen modul?")).not.toHaveValue("");
     expect(screen.getByText("← fra (uten navn)")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^Vis brief/ }));
-    expect(brief()).toHaveTextContent("**Denne modulen mottar fra «(uten navn)»** via start-boksen «Får data fra B»");
+    expect(brief()).toHaveTextContent("**Mottar fra «(uten navn)»**");
     await user.click(screen.getByRole("tab", { name: "Hele nettstedet" }));
-    expect(screen.getByLabelText("Oversikt over nettstedet, kan rulles")).toHaveTextContent("**(uten navn) → Modul A**: Får data fra B");
+    expect(screen.getByLabelText("Oversikt over nettstedet, kan rulles")).toHaveTextContent("**(uten navn) → Modul A**");
     await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Lukk" }));
     await user.click(screen.getByRole("button", { name: "Oversikt" }));
     expect(screen.getAllByText("Åpne")).toHaveLength(2);

@@ -21,6 +21,8 @@ type Props = {
   moduleBrief: string;
   workspaceBrief: string;
   questions: number;
+  /** De åpne spørsmålene, vist øverst så man ser hva som mangler før man kopierer. */
+  questionList: string[];
   actions: Pick<FlowActions, "ws" | "replace" | "insertModule">;
   backup: string | null;
   onCopy: (text: string) => void;
@@ -58,7 +60,7 @@ function BriefView({ text, label, id }: { text: string; label: string; id: strin
 }
 
 /** Skuff fra høyre med briefen for modulen, oversikten over nettstedet, og JSON for deling. */
-export function BriefDrawer({ open, initialTab = "modul", moduleLabel, onClose, moduleBrief, workspaceBrief, questions, actions, backup, onCopy, onImported }: Props) {
+export function BriefDrawer({ open, initialTab = "modul", moduleLabel, onClose, moduleBrief, workspaceBrief, questions, questionList, actions, backup, onCopy, onImported }: Props) {
   const [tab, setTab] = useState<BriefTab>(initialTab);
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -151,6 +153,17 @@ export function BriefDrawer({ open, initialTab = "modul", moduleLabel, onClose, 
             </button>
           ))}
         </div>
+        {tab === "modul" && questionList.length > 0 && (
+          <div className="rounded-md border border-warning bg-warning-soft px-3 py-2 text-[13px] text-warning">
+            <strong>Åpne spørsmål Claude vil stille:</strong>
+            <ul className="m-0 mt-1 list-disc pl-5">
+              {questionList.slice(0, 5).map((q) => (
+                <li key={q}>{q}</li>
+              ))}
+              {questionList.length > 5 && <li>… og {questionList.length - 5} til nederst i briefen.</li>}
+            </ul>
+          </div>
+        )}
         {tab === "modul" && <BriefView id="panel-modul" text={moduleBrief} label="Brief til Claude, kan rulles" />}
         {tab === "nettsted" && <BriefView id="panel-nettsted" text={workspaceBrief} label="Oversikt over nettstedet, kan rulles" />}
         {tab === "json" && (

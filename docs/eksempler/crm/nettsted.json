@@ -17,7 +17,7 @@
           "id": "crm-kontakter-person-1",
           "type": "person",
           "tittel": "Selger",
-          "notat": "Intern, innlogget. Ser alle kontakter, endrer sine egne.",
+          "notat": "Intern, innlogget. Ser alle firmaer og personer, endrer dem hen eier.",
           "x": -300,
           "y": -60
         },
@@ -25,7 +25,7 @@
           "id": "crm-kontakter-person-2",
           "type": "person",
           "tittel": "Daglig leder",
-          "notat": "Intern, innlogget. Ser og endrer alt, kan slette.",
+          "notat": "Intern, innlogget. Ser og endrer alt, kan slette og arkivere.",
           "x": -300,
           "y": 60
         },
@@ -41,23 +41,23 @@
           "id": "crm-kontakter-data-4",
           "type": "data",
           "tittel": "Firma",
-          "notat": "Felter: navn, org.nummer, bransje, eier, status, opprettet.\nStatuser: prospekt → kunde → tidligere kunde. Bare eier eller daglig leder flytter status.",
+          "notat": "Felter: navn, org.nummer, adresse, bransje, eier, status, sist kontakt, opprettet.\nStatuser: prospekt → kunde → tidligere kunde. Eier eller daglig leder flytter, unntatt kunde som settes av vunnet tilbud.",
           "x": 1200,
-          "y": 480
+          "y": 600
         },
         {
           "id": "crm-kontakter-data-5",
           "type": "data",
           "tittel": "Kontaktperson",
-          "notat": "Felter: navn, e-post, telefon, rolle, firma, sist kontaktet.",
+          "notat": "Felter: navn, e-post, telefon, rolle, firma, kilde (hvor vi fikk kontakten), status (aktiv eller sluttet), sist kontaktet.",
           "x": 1200,
-          "y": 600
+          "y": 720
         },
         {
           "id": "crm-kontakter-system-6",
           "type": "system",
           "tittel": "Brønnøysundregistrene",
-          "notat": "Vi henter firmanavn og adresse fra org.nummer. Skal ikke endres.",
+          "notat": "Vi henter firmanavn og adresse fra org.nummer. Åpent API, ingen innlogging.",
           "x": 300,
           "y": -120
         },
@@ -65,15 +65,15 @@
           "id": "crm-kontakter-system-7",
           "type": "system",
           "tittel": "Outlook",
-          "notat": "Vi åpner e-post til kontaktpersonen derfra. Vi lagrer ingenting i Outlook.",
+          "notat": "Vi åpner en ny e-post til kontaktpersonen. Vi lagrer ingenting i Outlook.",
           "x": 300,
           "y": -240
         },
         {
           "id": "crm-kontakter-steg-8",
           "type": "steg",
-          "tittel": "Slå opp firmaet",
-          "notat": "Organisasjonsnummer hentes fra Brønnøysund.",
+          "tittel": "Selger slår opp firmaet",
+          "notat": "Organisasjonsnummeret skrives inn; navn og adresse hentes fra Brønnøysund.",
           "x": 600,
           "y": 0
         },
@@ -88,8 +88,8 @@
         {
           "id": "crm-kontakter-steg-10",
           "type": "steg",
-          "tittel": "Legg til kontaktperson",
-          "notat": "Navn, e-post, telefon og rolle.",
+          "tittel": "Selger legger til kontaktperson",
+          "notat": "Navn, e-post, telefon, rolle og hvor vi fikk kontakten fra.",
           "x": 600,
           "y": 120
         },
@@ -104,34 +104,66 @@
         {
           "id": "crm-kontakter-steg-12",
           "type": "steg",
-          "tittel": "Sett eier og status",
+          "tittel": "Selger setter eier og status",
           "notat": "Eier er selgeren som følger opp. Status: prospekt, kunde eller tidligere kunde.",
           "x": 600,
           "y": 240
         },
         {
-          "id": "crm-kontakter-steg-13",
+          "id": "crm-kontakter-regel-13",
+          "type": "regel",
+          "tittel": "Vunnet mulighet setter firmaet til kunde automatisk",
+          "notat": "Ellers flytter bare eier eller daglig leder status. Eksempel: prospekt blir kunde når Tilbud melder «akseptert».",
+          "x": 900,
+          "y": 240
+        },
+        {
+          "id": "crm-kontakter-steg-14",
           "type": "steg",
-          "tittel": "Vis kontaktkortet",
+          "tittel": "Appen viser kontaktkortet",
           "notat": "",
           "x": 600,
           "y": 360
         },
         {
-          "id": "crm-kontakter-resultat-14",
+          "id": "crm-kontakter-resultat-15",
           "type": "resultat",
           "tittel": "Kontaktkort med alt om firmaet",
           "notat": "Side i appen: firma, personer, eier, status og aktivitetslogg. Knapp som åpner e-post i Outlook.",
           "x": 900,
-          "y": 240
+          "y": 360
         },
         {
-          "id": "crm-kontakter-sporsmal-15",
+          "id": "crm-kontakter-steg-16",
+          "type": "steg",
+          "tittel": "Daglig leder sletter eller arkiverer",
+          "notat": "Kontaktperson slettes på forespørsel. Firma med vunnet tilbud arkiveres i stedet for å slettes.",
+          "x": 600,
+          "y": 480
+        },
+        {
+          "id": "crm-kontakter-regel-17",
+          "type": "regel",
+          "tittel": "Slettet kontaktperson: aktivitetene beholdes anonymisert",
+          "notat": "GDPR: navn og e-post fjernes, «hva som ble sagt» beholdes uten person. Prospekter uten aktivitet på 24 måneder slettes automatisk.",
+          "x": 900,
+          "y": 480
+        },
+        {
+          "id": "crm-kontakter-sporsmal-18",
           "type": "sporsmal",
           "tittel": "Skal vi importere det gamle regnearket, eller starte på nytt?",
           "notat": "",
           "x": -300,
           "y": 280
+        },
+        {
+          "id": "crm-kontakter-sporsmal-19",
+          "type": "sporsmal",
+          "tittel": "Hva skjer med et vunnet tilbud: skal det bli et prosjekt i en egen modul?",
+          "notat": "",
+          "x": -300,
+          "y": 400
         }
       ],
       "edges": [
@@ -162,8 +194,8 @@
         },
         {
           "id": "crm-kontakter-e5",
-          "from": "crm-kontakter-steg-8",
-          "to": "crm-kontakter-system-6"
+          "from": "crm-kontakter-system-6",
+          "to": "crm-kontakter-steg-8"
         },
         {
           "id": "crm-kontakter-e6",
@@ -188,22 +220,47 @@
         {
           "id": "crm-kontakter-e10",
           "from": "crm-kontakter-steg-12",
-          "to": "crm-kontakter-data-4"
+          "to": "crm-kontakter-regel-13"
         },
         {
           "id": "crm-kontakter-e11",
           "from": "crm-kontakter-steg-12",
-          "to": "crm-kontakter-steg-13"
+          "to": "crm-kontakter-data-4"
         },
         {
           "id": "crm-kontakter-e12",
-          "from": "crm-kontakter-steg-13",
-          "to": "crm-kontakter-resultat-14"
+          "from": "crm-kontakter-steg-12",
+          "to": "crm-kontakter-steg-14"
         },
         {
           "id": "crm-kontakter-e13",
-          "from": "crm-kontakter-steg-13",
+          "from": "crm-kontakter-steg-14",
+          "to": "crm-kontakter-resultat-15"
+        },
+        {
+          "id": "crm-kontakter-e14",
+          "from": "crm-kontakter-resultat-15",
+          "to": "crm-kontakter-person-1"
+        },
+        {
+          "id": "crm-kontakter-e15",
+          "from": "crm-kontakter-steg-14",
           "to": "crm-kontakter-system-7"
+        },
+        {
+          "id": "crm-kontakter-e16",
+          "from": "crm-kontakter-steg-14",
+          "to": "crm-kontakter-steg-16"
+        },
+        {
+          "id": "crm-kontakter-e17",
+          "from": "crm-kontakter-steg-16",
+          "to": "crm-kontakter-regel-17"
+        },
+        {
+          "id": "crm-kontakter-e18",
+          "from": "crm-kontakter-steg-16",
+          "to": "crm-kontakter-data-5"
         }
       ],
       "eksempel": true,
@@ -226,7 +283,7 @@
           "id": "crm-muligheter-person-1",
           "type": "person",
           "tittel": "Selger",
-          "notat": "Eier sine egne muligheter.",
+          "notat": "Eier sine egne muligheter og ser alle.",
           "x": -300,
           "y": -60
         },
@@ -234,15 +291,15 @@
           "id": "crm-muligheter-person-2",
           "type": "person",
           "tittel": "Daglig leder",
-          "notat": "Ser alle.",
+          "notat": "Ser og endrer alle.",
           "x": -300,
           "y": 60
         },
         {
           "id": "crm-muligheter-start-3",
           "type": "start",
-          "tittel": "En mulighet registreres på en kontakt",
-          "notat": "Selgeren velger et firma fra Kontakter og skriver hva muligheten gjelder.",
+          "tittel": "En mulighet registreres på et firma",
+          "notat": "Selgeren velger firma og kontaktperson fra Kontakter og skriver hva muligheten gjelder. Henvendelser fra nettsiden kommer inn uten eier.",
           "x": 300,
           "y": 0,
           "ref": "crm-kontakter"
@@ -251,7 +308,7 @@
           "id": "crm-muligheter-data-4",
           "type": "data",
           "tittel": "Mulighet",
-          "notat": "Felter: firma, tittel, fase, verdi, sannsynlighet, eier, forventet dato, tapt-årsak, sist aktivitet.\nFaser: ny → kontaktet → møte → tilbud → vunnet eller tapt. Kan gå bakover, men aldri fra vunnet/tapt.",
+          "notat": "Felter: firma, kontaktperson, beslutningstaker (kontaktperson), tittel, hva kunden ba om, tjeneste, fase, verdi, sannsynlighet, eier, forventet dato, utfall, tapt-årsak, sist aktivitet.\nFaser: ny → kontaktet → møte → tilbud → vunnet eller tapt. Kan gå bakover, men aldri fra vunnet eller tapt.",
           "x": 1200,
           "y": 600
         },
@@ -259,107 +316,107 @@
           "id": "crm-muligheter-system-5",
           "type": "system",
           "tittel": "Skjemaet på nettsiden",
-          "notat": "Nye henvendelser kommer inn som muligheter i fase «ny», uten eier.",
+          "notat": "Nye henvendelser kommer inn som muligheter i fase «ny», uten eier. Vi leser skjemaet, endrer det ikke.",
           "x": 300,
           "y": -120
         },
         {
           "id": "crm-muligheter-steg-6",
           "type": "steg",
-          "tittel": "Kvalifiser muligheten",
-          "notat": "Har de et behov, budsjett og en beslutningstaker? Henvendelser fra nettsiden starter her.",
+          "tittel": "Selger tar en henvendelse uten eier",
+          "notat": "Første selger som trykker «Ta» blir eier.",
           "x": 600,
           "y": 0
         },
         {
           "id": "crm-muligheter-regel-7",
           "type": "regel",
-          "tittel": "Uten beslutningstaker blir muligheten liggende i «ny»",
-          "notat": "Eksempel: «vet ikke hvem som bestemmer» gir ikke lov til å flytte til «kontaktet».",
+          "tittel": "Henvendelser uten eier vises for alle selgere",
+          "notat": "Etter 2 virkedager uten eier varsles daglig leder.",
           "x": 900,
           "y": 0
         },
         {
           "id": "crm-muligheter-steg-8",
           "type": "steg",
-          "tittel": "Sett fase, verdi og forventet dato",
-          "notat": "",
+          "tittel": "Selger kvalifiserer muligheten",
+          "notat": "Har de et behov, budsjett og en beslutningstaker?",
           "x": 600,
           "y": 120
         },
         {
           "id": "crm-muligheter-regel-9",
           "type": "regel",
-          "tittel": "Fasen «tilbud» krever verdi i kroner",
-          "notat": "Eksempel: 0 kr avvises.",
+          "tittel": "Uten beslutningstaker kan ikke fasen flyttes fra «ny»",
+          "notat": "Eksempel: mangler feltet beslutningstaker, er «kontaktet» sperret.",
           "x": 900,
           "y": 120
         },
         {
           "id": "crm-muligheter-steg-10",
           "type": "steg",
-          "tittel": "Flytt muligheten mellom faser",
-          "notat": "Dra kortet på tavlen.",
+          "tittel": "Selger setter fase, verdi og forventet dato",
+          "notat": "",
           "x": 600,
           "y": 240
         },
         {
           "id": "crm-muligheter-regel-11",
           "type": "regel",
-          "tittel": "Ingen aktivitet på 14 dager flagger muligheten",
-          "notat": "Vises gult på tavlen og i ukesrapporten.",
+          "tittel": "Sannsynlighet følger fasen, men kan overstyres",
+          "notat": "ny 10 %, kontaktet 30 %, møte 60 %, tilbud 80 %. Fasen «tilbud» krever verdi i kroner; 0 kr avvises.",
           "x": 900,
           "y": 240
         },
         {
-          "id": "crm-muligheter-steg-12",
-          "type": "steg",
-          "tittel": "Marker klar for tilbud",
-          "notat": "",
-          "x": 600,
-          "y": 360
-        },
-        {
-          "id": "crm-muligheter-resultat-13",
+          "id": "crm-muligheter-resultat-12",
           "type": "resultat",
-          "tittel": "Mulighet klar for tilbud",
-          "notat": "Kontakt, verdi og det kunden ba om. Tilbud-modulen tar over.",
+          "tittel": "Mulighet i fase tilbud",
+          "notat": "Felter som sendes: mulighet-id, firma, kontaktperson, verdi, hva kunden ba om, tjeneste.",
           "x": 900,
           "y": 360,
           "ref": "crm-tilbud"
         },
         {
-          "id": "crm-muligheter-steg-14",
+          "id": "crm-muligheter-steg-13",
           "type": "steg",
-          "tittel": "Registrer vunnet eller tapt",
-          "notat": "",
+          "tittel": "Selger flytter muligheten mellom faser",
+          "notat": "Dra kortet på tavlen. Når selgeren drar kortet til «tilbud», starter Tilbud-modulen. Tilbud setter aldri fasen selv.",
+          "x": 600,
+          "y": 360
+        },
+        {
+          "id": "crm-muligheter-regel-14",
+          "type": "regel",
+          "tittel": "Ingen aktivitet på 14 dager flagger muligheten",
+          "notat": "Vises gult på tavlen og i ukesrapporten.",
+          "x": 900,
+          "y": 480
+        },
+        {
+          "id": "crm-muligheter-steg-15",
+          "type": "steg",
+          "tittel": "Utfall registreres",
+          "notat": "Vunnet eller tapt.",
           "x": 600,
           "y": 480
         },
         {
-          "id": "crm-muligheter-regel-15",
+          "id": "crm-muligheter-regel-16",
           "type": "regel",
-          "tittel": "Tapt krever en årsak fra en liste",
-          "notat": "Pris, tidspunkt, valgte konkurrent, ikke svar.",
+          "tittel": "Utfallet settes ett sted: fra Tilbud når det finnes et tilbud, ellers her",
+          "notat": "Akseptert tilbud = vunnet, avslått eller utløpt = tapt. Tapt krever årsak fra liste: pris, tidspunkt, valgte konkurrent, ikke svar.",
           "x": 900,
-          "y": 480
+          "y": 600
         },
         {
-          "id": "crm-muligheter-resultat-16",
+          "id": "crm-muligheter-resultat-17",
           "type": "resultat",
           "tittel": "Utfall på muligheten",
-          "notat": "Vunnet eller tapt, med verdi og årsak. Går til rapporteringen.",
+          "notat": "Felter som sendes: mulighet-id, utfall, verdi, årsak, dato, selger.",
           "x": 900,
-          "y": 600,
+          "y": 720,
           "ref": "crm-rapportering"
-        },
-        {
-          "id": "crm-muligheter-sporsmal-17",
-          "type": "sporsmal",
-          "tittel": "Skal sannsynlighet settes av selgeren, eller følge fasen automatisk?",
-          "notat": "",
-          "x": -300,
-          "y": 280
         }
       ],
       "edges": [
@@ -390,8 +447,8 @@
         },
         {
           "id": "crm-muligheter-e5",
-          "from": "crm-muligheter-steg-6",
-          "to": "crm-muligheter-system-5"
+          "from": "crm-muligheter-system-5",
+          "to": "crm-muligheter-steg-6"
         },
         {
           "id": "crm-muligheter-e6",
@@ -421,27 +478,47 @@
         {
           "id": "crm-muligheter-e11",
           "from": "crm-muligheter-steg-10",
-          "to": "crm-muligheter-steg-12"
+          "to": "crm-muligheter-resultat-12"
         },
         {
           "id": "crm-muligheter-e12",
-          "from": "crm-muligheter-steg-12",
-          "to": "crm-muligheter-resultat-13"
+          "from": "crm-muligheter-resultat-12",
+          "to": "crm-muligheter-data-4"
         },
         {
           "id": "crm-muligheter-e13",
-          "from": "crm-muligheter-steg-12",
-          "to": "crm-muligheter-steg-14"
+          "from": "crm-muligheter-steg-10",
+          "to": "crm-muligheter-data-4"
         },
         {
           "id": "crm-muligheter-e14",
-          "from": "crm-muligheter-steg-14",
-          "to": "crm-muligheter-regel-15"
+          "from": "crm-muligheter-steg-10",
+          "to": "crm-muligheter-steg-13"
         },
         {
           "id": "crm-muligheter-e15",
-          "from": "crm-muligheter-steg-14",
-          "to": "crm-muligheter-resultat-16"
+          "from": "crm-muligheter-steg-13",
+          "to": "crm-muligheter-regel-14"
+        },
+        {
+          "id": "crm-muligheter-e16",
+          "from": "crm-muligheter-steg-13",
+          "to": "crm-muligheter-steg-15"
+        },
+        {
+          "id": "crm-muligheter-e17",
+          "from": "crm-muligheter-steg-15",
+          "to": "crm-muligheter-regel-16"
+        },
+        {
+          "id": "crm-muligheter-e18",
+          "from": "crm-muligheter-steg-15",
+          "to": "crm-muligheter-resultat-17"
+        },
+        {
+          "id": "crm-muligheter-e19",
+          "from": "crm-muligheter-resultat-17",
+          "to": "crm-muligheter-data-4"
         }
       ],
       "eksempel": true,
@@ -464,7 +541,7 @@
           "id": "crm-tilbud-person-1",
           "type": "person",
           "tittel": "Selger",
-          "notat": "Lager og sender.",
+          "notat": "Lager og sender egne tilbud, ser alle.",
           "x": -300,
           "y": -60
         },
@@ -477,127 +554,151 @@
           "y": 60
         },
         {
-          "id": "crm-tilbud-start-3",
+          "id": "crm-tilbud-person-3",
+          "type": "person",
+          "tittel": "Kunde",
+          "notat": "Ekstern, uten innlogging. Får tilbudet som PDF på e-post.",
+          "x": -300,
+          "y": 180
+        },
+        {
+          "id": "crm-tilbud-start-4",
           "type": "start",
-          "tittel": "En mulighet er klar for tilbud",
-          "notat": "Kommer fra Muligheter med kontakt og verdi.",
+          "tittel": "En mulighet er i fase tilbud",
+          "notat": "Kommer fra Muligheter med mulighet-id, firma, kontaktperson, verdi, hva kunden ba om og tjeneste.",
           "x": 300,
           "y": 0,
           "ref": "crm-muligheter"
         },
         {
-          "id": "crm-tilbud-data-4",
+          "id": "crm-tilbud-data-5",
           "type": "data",
           "tittel": "Tilbud",
-          "notat": "Felter: mulighet, linjer, sum, gyldig til, status, godkjent av.\nStatuser: utkast → til godkjenning → sendt → akseptert, avslått eller utløpt.",
+          "notat": "Felter: mulighet, firma, sendt til (kontaktperson), eier, linjer, sum uten mva, gyldig til, sendt dato, status, godkjent av, kommentar fra leder.\nStatuser: utkast → til godkjenning → godkjent → sendt → akseptert, avslått, utløpt eller erstattet. Til godkjenning → utkast når leder avslår.",
           "x": 1200,
           "y": 600
         },
         {
-          "id": "crm-tilbud-system-5",
+          "id": "crm-tilbud-data-6",
+          "type": "data",
+          "tittel": "Tilbudslinje",
+          "notat": "Felter: tilbud, beskrivelse, timer, timepris, fastpris, sum. Enten timer × timepris eller fastpris, ikke begge.",
+          "x": 1200,
+          "y": 720
+        },
+        {
+          "id": "crm-tilbud-system-7",
           "type": "system",
           "tittel": "Tilbudsmalene",
-          "notat": "Word-maler per tjeneste i SharePoint. Vi leser dem, endrer dem ikke.",
+          "notat": "Word-maler per tjeneste i SharePoint. Vi leser dem for å hente linjer og tekst; vi endrer dem ikke.",
           "x": 300,
           "y": -120
         },
         {
-          "id": "crm-tilbud-system-6",
+          "id": "crm-tilbud-system-8",
           "type": "system",
           "tittel": "E-post",
-          "notat": "Vi sender PDF fra selgerens adresse.",
+          "notat": "PDF sendes fra en felles avsender med selgeren som svar-til, så vi slipper tilgang til hver selgers postkasse.",
           "x": 300,
           "y": -240
         },
         {
-          "id": "crm-tilbud-steg-7",
+          "id": "crm-tilbud-steg-9",
           "type": "steg",
-          "tittel": "Lag tilbudet fra mal",
-          "notat": "Linjer med timer og fastpris fra malen for tjenesten.",
+          "tittel": "Selger lager tilbudet fra mal",
+          "notat": "Malen for tjenesten gir linjene. Én linje er beskrivelse, timer og timepris, eller en fastpris. Sum er uten mva.",
           "x": 600,
-          "y": 0
-        },
-        {
-          "id": "crm-tilbud-steg-8",
-          "type": "steg",
-          "tittel": "Få godkjenning",
-          "notat": "",
-          "x": 600,
-          "y": 120
-        },
-        {
-          "id": "crm-tilbud-regel-9",
-          "type": "regel",
-          "tittel": "Over 200 000 kr må daglig leder godkjenne før sending",
-          "notat": "Eksempel: 250 000 kr sendes ikke før leder har trykket «Godkjenn».",
-          "x": 900,
           "y": 0
         },
         {
           "id": "crm-tilbud-steg-10",
           "type": "steg",
-          "tittel": "Send tilbudet til kunden",
+          "tittel": "Daglig leder godkjenner",
           "notat": "",
           "x": 600,
-          "y": 240
+          "y": 120
         },
         {
-          "id": "crm-tilbud-resultat-11",
-          "type": "resultat",
-          "tittel": "Tilbud som PDF på e-post til kunden",
-          "notat": "Med gyldighet 30 dager.",
+          "id": "crm-tilbud-regel-11",
+          "type": "regel",
+          "tittel": "Over 200 000 kr må daglig leder godkjenne før sending",
+          "notat": "Eksempel: 250 000 kr sendes ikke før leder har trykket «Godkjenn». 200 000 kr trenger ikke, og går rett fra utkast til sendt. Avslår leder, går tilbudet tilbake til utkast med kommentar.",
           "x": 900,
-          "y": 120
+          "y": 0
         },
         {
           "id": "crm-tilbud-steg-12",
           "type": "steg",
-          "tittel": "Registrer at tilbudet er sendt",
+          "tittel": "Selger sender tilbudet til kunden",
+          "notat": "PDF fra malen, sendt til valgt kontaktperson. Status blir «sendt» med dato.",
+          "x": 600,
+          "y": 240
+        },
+        {
+          "id": "crm-tilbud-resultat-13",
+          "type": "resultat",
+          "tittel": "Tilbud som PDF på e-post til kunden",
+          "notat": "Gyldig 30 dager fra sendt dato.",
+          "x": 900,
+          "y": 120
+        },
+        {
+          "id": "crm-tilbud-steg-14",
+          "type": "steg",
+          "tittel": "Appen melder at tilbudet er sendt",
           "notat": "",
           "x": 600,
           "y": 360
         },
         {
-          "id": "crm-tilbud-resultat-13",
+          "id": "crm-tilbud-resultat-15",
           "type": "resultat",
           "tittel": "Tilbud sendt",
-          "notat": "Oppfølging-modulen tar over fra her.",
+          "notat": "Felter som sendes: tilbud-id, mulighet-id, firma, kontaktperson, selger, sendt dato, gyldig til.",
           "x": 900,
           "y": 240,
-          "ref": "crm-oppfolging"
+          "ref": "crm-aktiviteter"
         },
         {
-          "id": "crm-tilbud-steg-14",
+          "id": "crm-tilbud-steg-16",
           "type": "steg",
-          "tittel": "Registrer kundens svar",
+          "tittel": "Selger registrerer kundens svar",
           "notat": "",
           "x": 600,
           "y": 480
         },
         {
-          "id": "crm-tilbud-regel-15",
+          "id": "crm-tilbud-regel-17",
           "type": "regel",
-          "tittel": "Tilbud som ikke er besvart etter 30 dager settes til utløpt",
-          "notat": "Selgeren får beskjed dagen før.",
+          "tittel": "Ubesvart tilbud settes til utløpt dagen etter gyldig til",
+          "notat": "Selgeren får beskjed dagen før. Utløpt regnes som tapt med årsak «ikke svar». Nytt tilbud på samme mulighet er lov, det gamle blir «erstattet».",
           "x": 900,
           "y": 360
         },
         {
-          "id": "crm-tilbud-resultat-16",
+          "id": "crm-tilbud-resultat-18",
           "type": "resultat",
           "tittel": "Svar på tilbudet",
-          "notat": "Akseptert, avslått eller utløpt. Muligheter får utfallet.",
+          "notat": "Felter som sendes: tilbud-id, mulighet-id, svar (akseptert, avslått, utløpt, erstattet), årsak ved avslått (pris, tidspunkt, valgte konkurrent), dato.",
           "x": 900,
           "y": 480,
           "ref": "crm-muligheter"
         },
         {
-          "id": "crm-tilbud-sporsmal-17",
+          "id": "crm-tilbud-sporsmal-19",
           "type": "sporsmal",
-          "tittel": "Skal kunden kunne akseptere med én knapp i e-posten?",
+          "tittel": "Hvem godkjenner daglig leders egne tilbud over 200 000 kr?",
           "notat": "",
           "x": -300,
-          "y": 280
+          "y": 400
+        },
+        {
+          "id": "crm-tilbud-sporsmal-20",
+          "type": "sporsmal",
+          "tittel": "Kan PDF-en lages fra en mal i appen i stedet for Word-malene i SharePoint?",
+          "notat": "",
+          "x": -300,
+          "y": 520
         }
       ],
       "edges": [
@@ -614,47 +715,47 @@
         {
           "id": "crm-tilbud-e2",
           "from": "crm-tilbud-maal-0",
-          "to": "crm-tilbud-start-3"
+          "to": "crm-tilbud-person-3"
         },
         {
           "id": "crm-tilbud-e3",
-          "from": "crm-tilbud-start-3",
-          "to": "crm-tilbud-steg-7"
+          "from": "crm-tilbud-maal-0",
+          "to": "crm-tilbud-start-4"
         },
         {
           "id": "crm-tilbud-e4",
-          "from": "crm-tilbud-steg-7",
-          "to": "crm-tilbud-data-4"
+          "from": "crm-tilbud-start-4",
+          "to": "crm-tilbud-steg-9"
         },
         {
           "id": "crm-tilbud-e5",
-          "from": "crm-tilbud-steg-7",
-          "to": "crm-tilbud-system-5"
+          "from": "crm-tilbud-steg-9",
+          "to": "crm-tilbud-data-5"
         },
         {
           "id": "crm-tilbud-e6",
-          "from": "crm-tilbud-steg-7",
-          "to": "crm-tilbud-steg-8"
+          "from": "crm-tilbud-steg-9",
+          "to": "crm-tilbud-data-6"
         },
         {
           "id": "crm-tilbud-e7",
-          "from": "crm-tilbud-steg-8",
-          "to": "crm-tilbud-regel-9"
+          "from": "crm-tilbud-system-7",
+          "to": "crm-tilbud-steg-9"
         },
         {
           "id": "crm-tilbud-e8",
-          "from": "crm-tilbud-steg-8",
+          "from": "crm-tilbud-steg-9",
           "to": "crm-tilbud-steg-10"
         },
         {
           "id": "crm-tilbud-e9",
           "from": "crm-tilbud-steg-10",
-          "to": "crm-tilbud-resultat-11"
+          "to": "crm-tilbud-regel-11"
         },
         {
           "id": "crm-tilbud-e10",
           "from": "crm-tilbud-steg-10",
-          "to": "crm-tilbud-system-6"
+          "to": "crm-tilbud-data-5"
         },
         {
           "id": "crm-tilbud-e11",
@@ -668,18 +769,53 @@
         },
         {
           "id": "crm-tilbud-e13",
+          "from": "crm-tilbud-resultat-13",
+          "to": "crm-tilbud-person-3"
+        },
+        {
+          "id": "crm-tilbud-e14",
+          "from": "crm-tilbud-steg-12",
+          "to": "crm-tilbud-data-5"
+        },
+        {
+          "id": "crm-tilbud-e15",
+          "from": "crm-tilbud-steg-12",
+          "to": "crm-tilbud-system-8"
+        },
+        {
+          "id": "crm-tilbud-e16",
           "from": "crm-tilbud-steg-12",
           "to": "crm-tilbud-steg-14"
         },
         {
-          "id": "crm-tilbud-e14",
+          "id": "crm-tilbud-e17",
           "from": "crm-tilbud-steg-14",
-          "to": "crm-tilbud-regel-15"
+          "to": "crm-tilbud-resultat-15"
         },
         {
-          "id": "crm-tilbud-e15",
+          "id": "crm-tilbud-e18",
+          "from": "crm-tilbud-resultat-15",
+          "to": "crm-tilbud-data-5"
+        },
+        {
+          "id": "crm-tilbud-e19",
           "from": "crm-tilbud-steg-14",
-          "to": "crm-tilbud-resultat-16"
+          "to": "crm-tilbud-steg-16"
+        },
+        {
+          "id": "crm-tilbud-e20",
+          "from": "crm-tilbud-steg-16",
+          "to": "crm-tilbud-regel-17"
+        },
+        {
+          "id": "crm-tilbud-e21",
+          "from": "crm-tilbud-steg-16",
+          "to": "crm-tilbud-resultat-18"
+        },
+        {
+          "id": "crm-tilbud-e22",
+          "from": "crm-tilbud-resultat-18",
+          "to": "crm-tilbud-data-5"
         }
       ],
       "eksempel": true,
@@ -687,60 +823,67 @@
       "y": 0
     },
     {
-      "id": "crm-oppfolging",
-      "navn": "Oppfølging",
+      "id": "crm-aktiviteter",
+      "navn": "Aktiviteter",
       "nodes": [
         {
-          "id": "crm-oppfolging-maal-0",
+          "id": "crm-aktiviteter-maal-0",
           "type": "maal",
-          "tittel": "Ingen tilbud eller kunde blir glemt",
+          "tittel": "Ingen kunde eller tilbud blir glemt",
           "notat": "Oppfølging skjer «når det passer». Noen tilbud dør stille, og kunder hører ikke fra oss etter levering.\nVirker når: hvert sendt tilbud har en planlagt neste aktivitet, og ingen kunde har gått 90 dager uten kontakt.",
           "x": 0,
           "y": 0
         },
         {
-          "id": "crm-oppfolging-person-1",
+          "id": "crm-aktiviteter-person-1",
           "type": "person",
           "tittel": "Selger",
-          "notat": "Gjør oppfølgingen.",
+          "notat": "Planlegger og logger egne aktiviteter, ser alle.",
           "x": -300,
           "y": -60
         },
         {
-          "id": "crm-oppfolging-start-2",
-          "type": "start",
-          "tittel": "Et tilbud er sendt",
-          "notat": "Kommer fra Tilbud.",
-          "x": 300,
-          "y": 0,
-          "ref": "crm-tilbud"
+          "id": "crm-aktiviteter-person-2",
+          "type": "person",
+          "tittel": "Daglig leder",
+          "notat": "Ser alle.",
+          "x": -300,
+          "y": 60
         },
         {
-          "id": "crm-oppfolging-data-3",
+          "id": "crm-aktiviteter-start-3",
+          "type": "start",
+          "tittel": "En aktivitet planlegges eller logges på et firma eller en mulighet",
+          "notat": "Selgeren gjør det selv, eller det skjer automatisk når et tilbud er sendt.",
+          "x": 300,
+          "y": 0
+        },
+        {
+          "id": "crm-aktiviteter-data-4",
           "type": "data",
           "tittel": "Aktivitet",
-          "notat": "Felter: type, dato, notat, firma, mulighet, utført av, gjort.\nStatuser: planlagt → gjort, eller planlagt → avlyst.",
+          "notat": "Felter: type, dato, notat, firma, mulighet, tilbud, utført av, status.\nStatuser: planlagt → gjort, eller planlagt → avlyst.",
           "x": 1200,
-          "y": 480
+          "y": 600
         },
         {
-          "id": "crm-oppfolging-system-4",
+          "id": "crm-aktiviteter-system-5",
           "type": "system",
           "tittel": "Microsoft Teams",
-          "notat": "Vi sender påminnelser til selgeren. Kanalen «Salg».",
+          "notat": "Vi sender påminnelser til selgeren i kanalen «Salg».",
           "x": 300,
           "y": -120
         },
         {
-          "id": "crm-oppfolging-steg-5",
+          "id": "crm-aktiviteter-steg-6",
           "type": "steg",
-          "tittel": "Planlegg neste aktivitet",
-          "notat": "Samtale, e-post eller møte, med dato.",
+          "tittel": "Appen oppretter aktivitet for sendt tilbud",
+          "notat": "Tilbud sender «Tilbud sendt» hit. Da lages en planlagt oppfølging 7 dager senere.",
           "x": 600,
           "y": 0
         },
         {
-          "id": "crm-oppfolging-regel-6",
+          "id": "crm-aktiviteter-regel-7",
           "type": "regel",
           "tittel": "Et sendt tilbud må alltid ha en planlagt aktivitet",
           "notat": "Eksempel: uten dato får selgeren rød markering på tavlen.",
@@ -748,121 +891,140 @@
           "y": 0
         },
         {
-          "id": "crm-oppfolging-steg-7",
+          "id": "crm-aktiviteter-steg-8",
           "type": "steg",
-          "tittel": "Påminn selgeren",
-          "notat": "Melding i Teams samme morgen.",
+          "tittel": "Selger planlegger neste aktivitet",
+          "notat": "Samtale, e-post eller møte, med dato, på et firma eller en mulighet.",
           "x": 600,
           "y": 120
         },
         {
-          "id": "crm-oppfolging-steg-8",
+          "id": "crm-aktiviteter-steg-9",
           "type": "steg",
-          "tittel": "Logg aktiviteten",
-          "notat": "Hva som ble sagt, og neste steg.",
+          "tittel": "Appen påminner selgeren",
+          "notat": "Melding i Teams samme morgen.",
           "x": 600,
           "y": 240
         },
         {
-          "id": "crm-oppfolging-resultat-9",
-          "type": "resultat",
-          "tittel": "Aktivitetslogg på kontaktkortet",
-          "notat": "Vises under firmaet i Kontakter.",
-          "x": 900,
-          "y": 120,
-          "ref": "crm-kontakter"
-        },
-        {
-          "id": "crm-oppfolging-steg-10",
+          "id": "crm-aktiviteter-steg-10",
           "type": "steg",
-          "tittel": "Registrer utfallet",
-          "notat": "",
+          "tittel": "Selger logger aktiviteten",
+          "notat": "Hva som ble sagt, og neste steg. Oppdaterer «sist kontakt» på firmaet.",
           "x": 600,
           "y": 360
         },
         {
-          "id": "crm-oppfolging-regel-11",
+          "id": "crm-aktiviteter-regel-11",
           "type": "regel",
-          "tittel": "Utsatt gir ny aktivitet om 14 dager, maks tre ganger",
-          "notat": "Deretter settes muligheten til tapt med årsak «ikke svar».",
+          "tittel": "Utsatt gir ny aktivitet om 14 dager, maks to ganger, aldri etter tilbudets gyldighet",
+          "notat": "Deretter må selgeren registrere utfall i Muligheter eller Tilbud. Aktiviteter setter aldri utfall selv.",
           "x": 900,
-          "y": 240
+          "y": 120
         },
         {
-          "id": "crm-oppfolging-resultat-12",
+          "id": "crm-aktiviteter-resultat-12",
           "type": "resultat",
-          "tittel": "Utfall etter oppfølging",
-          "notat": "Muligheter får vunnet, tapt eller utsatt.",
+          "tittel": "Aktivitetslogg på kontaktkortet",
+          "notat": "Felter som sendes: firma, dato, type, notat, utført av.",
           "x": 900,
-          "y": 360,
-          "ref": "crm-muligheter"
+          "y": 240,
+          "ref": "crm-kontakter"
+        },
+        {
+          "id": "crm-aktiviteter-steg-13",
+          "type": "steg",
+          "tittel": "Appen flagger firmaer uten kontakt på 90 dager",
+          "notat": "Nattjobb. Vises på tavlen og i ukesrapporten.",
+          "x": 600,
+          "y": 480
         }
       ],
       "edges": [
         {
-          "id": "crm-oppfolging-e0",
-          "from": "crm-oppfolging-maal-0",
-          "to": "crm-oppfolging-person-1"
+          "id": "crm-aktiviteter-e0",
+          "from": "crm-aktiviteter-maal-0",
+          "to": "crm-aktiviteter-person-1"
         },
         {
-          "id": "crm-oppfolging-e1",
-          "from": "crm-oppfolging-maal-0",
-          "to": "crm-oppfolging-start-2"
+          "id": "crm-aktiviteter-e1",
+          "from": "crm-aktiviteter-maal-0",
+          "to": "crm-aktiviteter-person-2"
         },
         {
-          "id": "crm-oppfolging-e2",
-          "from": "crm-oppfolging-start-2",
-          "to": "crm-oppfolging-steg-5"
+          "id": "crm-aktiviteter-e2",
+          "from": "crm-aktiviteter-maal-0",
+          "to": "crm-aktiviteter-start-3"
         },
         {
-          "id": "crm-oppfolging-e3",
-          "from": "crm-oppfolging-steg-5",
-          "to": "crm-oppfolging-regel-6"
+          "id": "crm-aktiviteter-e3",
+          "from": "crm-aktiviteter-start-3",
+          "to": "crm-aktiviteter-steg-6"
         },
         {
-          "id": "crm-oppfolging-e4",
-          "from": "crm-oppfolging-steg-5",
-          "to": "crm-oppfolging-data-3"
+          "id": "crm-aktiviteter-e4",
+          "from": "crm-aktiviteter-steg-6",
+          "to": "crm-aktiviteter-regel-7"
         },
         {
-          "id": "crm-oppfolging-e5",
-          "from": "crm-oppfolging-steg-5",
-          "to": "crm-oppfolging-steg-7"
+          "id": "crm-aktiviteter-e5",
+          "from": "crm-aktiviteter-steg-6",
+          "to": "crm-aktiviteter-data-4"
         },
         {
-          "id": "crm-oppfolging-e6",
-          "from": "crm-oppfolging-steg-7",
-          "to": "crm-oppfolging-system-4"
+          "id": "crm-aktiviteter-e6",
+          "from": "crm-aktiviteter-steg-6",
+          "to": "crm-aktiviteter-steg-8"
         },
         {
-          "id": "crm-oppfolging-e7",
-          "from": "crm-oppfolging-steg-7",
-          "to": "crm-oppfolging-steg-8"
+          "id": "crm-aktiviteter-e7",
+          "from": "crm-aktiviteter-steg-8",
+          "to": "crm-aktiviteter-data-4"
         },
         {
-          "id": "crm-oppfolging-e8",
-          "from": "crm-oppfolging-steg-8",
-          "to": "crm-oppfolging-resultat-9"
+          "id": "crm-aktiviteter-e8",
+          "from": "crm-aktiviteter-steg-8",
+          "to": "crm-aktiviteter-steg-9"
         },
         {
-          "id": "crm-oppfolging-e9",
-          "from": "crm-oppfolging-steg-8",
-          "to": "crm-oppfolging-data-3"
+          "id": "crm-aktiviteter-e9",
+          "from": "crm-aktiviteter-steg-9",
+          "to": "crm-aktiviteter-system-5"
         },
         {
-          "id": "crm-oppfolging-e10",
-          "from": "crm-oppfolging-steg-8",
-          "to": "crm-oppfolging-steg-10"
+          "id": "crm-aktiviteter-e10",
+          "from": "crm-aktiviteter-steg-9",
+          "to": "crm-aktiviteter-steg-10"
         },
         {
-          "id": "crm-oppfolging-e11",
-          "from": "crm-oppfolging-steg-10",
-          "to": "crm-oppfolging-regel-11"
+          "id": "crm-aktiviteter-e11",
+          "from": "crm-aktiviteter-steg-10",
+          "to": "crm-aktiviteter-regel-11"
         },
         {
-          "id": "crm-oppfolging-e12",
-          "from": "crm-oppfolging-steg-10",
-          "to": "crm-oppfolging-resultat-12"
+          "id": "crm-aktiviteter-e12",
+          "from": "crm-aktiviteter-steg-10",
+          "to": "crm-aktiviteter-resultat-12"
+        },
+        {
+          "id": "crm-aktiviteter-e13",
+          "from": "crm-aktiviteter-resultat-12",
+          "to": "crm-aktiviteter-data-4"
+        },
+        {
+          "id": "crm-aktiviteter-e14",
+          "from": "crm-aktiviteter-steg-10",
+          "to": "crm-aktiviteter-data-4"
+        },
+        {
+          "id": "crm-aktiviteter-e15",
+          "from": "crm-aktiviteter-steg-10",
+          "to": "crm-aktiviteter-steg-13"
+        },
+        {
+          "id": "crm-aktiviteter-e16",
+          "from": "crm-aktiviteter-steg-13",
+          "to": "crm-aktiviteter-data-4"
         }
       ],
       "eksempel": true,
@@ -893,7 +1055,7 @@
           "id": "crm-rapportering-person-2",
           "type": "person",
           "tittel": "Selger",
-          "notat": "Ser bare egne tall.",
+          "notat": "Ser bare egne tall, og summen for alle.",
           "x": -300,
           "y": 60
         },
@@ -901,7 +1063,7 @@
           "id": "crm-rapportering-start-3",
           "type": "start",
           "tittel": "Hver mandag kl. 07, eller når en mulighet får utfall",
-          "notat": "Tidsstyrt for ukesrapporten, og løpende for tavlen.",
+          "notat": "Tidsstyrt for ukesrapporten, og løpende for dashbordet. Utfall kommer fra Muligheter med mulighet-id, utfall, verdi, årsak, dato og selger.",
           "x": 300,
           "y": 0,
           "ref": "crm-muligheter"
@@ -910,37 +1072,55 @@
           "id": "crm-rapportering-data-4",
           "type": "data",
           "tittel": "Ukesrapport",
-          "notat": "Felter: uke, vunnet sum, tapt sum, pipeline per fase, muligheter flagget.",
+          "notat": "Felter: uke, vunnet sum, tapt sum, pipeline per fase, muligheter flagget, firmaer flagget.",
           "x": 1200,
-          "y": 480
+          "y": 600
         },
         {
           "id": "crm-rapportering-system-5",
           "type": "system",
           "tittel": "Kontakter",
-          "notat": "Vi leser firma og eier derfra for å gruppere per selger.",
+          "notat": "Vi leser firma og eier for å gruppere per selger.",
           "x": 300,
           "y": -120,
           "ref": "crm-kontakter"
         },
         {
-          "id": "crm-rapportering-steg-6",
+          "id": "crm-rapportering-system-6",
+          "type": "system",
+          "tittel": "Muligheter",
+          "notat": "Vi leser fase, verdi og sannsynlighet.",
+          "x": 300,
+          "y": -240,
+          "ref": "crm-muligheter"
+        },
+        {
+          "id": "crm-rapportering-system-7",
+          "type": "system",
+          "tittel": "Aktiviteter",
+          "notat": "Vi leser flaggede muligheter og firmaer.",
+          "x": 300,
+          "y": -360,
+          "ref": "crm-aktiviteter"
+        },
+        {
+          "id": "crm-rapportering-steg-8",
           "type": "steg",
-          "tittel": "Hent vunnet og tapt siste uke",
+          "tittel": "Appen henter vunnet og tapt siste uke",
           "notat": "",
           "x": 600,
           "y": 0
         },
         {
-          "id": "crm-rapportering-steg-7",
+          "id": "crm-rapportering-steg-9",
           "type": "steg",
-          "tittel": "Beregn pipeline-verdi per fase",
-          "notat": "Verdi ganger sannsynlighet.",
+          "tittel": "Appen beregner pipeline-verdi per fase",
+          "notat": "Verdi ganger sannsynlighet, lest fra Muligheter.",
           "x": 600,
           "y": 120
         },
         {
-          "id": "crm-rapportering-regel-8",
+          "id": "crm-rapportering-regel-10",
           "type": "regel",
           "tittel": "Bare daglig leder ser omsetning per selger",
           "notat": "Selgere ser summen for alle, men navn bare på egne.",
@@ -948,39 +1128,47 @@
           "y": 0
         },
         {
-          "id": "crm-rapportering-steg-9",
+          "id": "crm-rapportering-steg-11",
           "type": "steg",
-          "tittel": "Lag ukesrapporten",
-          "notat": "",
+          "tittel": "Appen finner det som trenger oppmerksomhet",
+          "notat": "Muligheter uten aktivitet på 14 dager og firmaer uten kontakt på 90 dager, lest fra Aktiviteter.",
           "x": 600,
           "y": 240
         },
         {
-          "id": "crm-rapportering-resultat-10",
-          "type": "resultat",
-          "tittel": "Ukesrapport på e-post til daglig leder",
-          "notat": "Vunnet, tapt, pipeline per fase, muligheter uten aktivitet.",
-          "x": 900,
-          "y": 120
-        },
-        {
-          "id": "crm-rapportering-steg-11",
+          "id": "crm-rapportering-steg-12",
           "type": "steg",
-          "tittel": "Oppdater dashboardet",
+          "tittel": "Appen lager ukesrapporten",
           "notat": "",
           "x": 600,
           "y": 360
         },
         {
-          "id": "crm-rapportering-resultat-12",
+          "id": "crm-rapportering-resultat-13",
           "type": "resultat",
-          "tittel": "Dashboard-side",
+          "tittel": "Ukesrapport på e-post til daglig leder",
+          "notat": "Vunnet, tapt, pipeline per fase, det som trenger oppmerksomhet.",
+          "x": 900,
+          "y": 120
+        },
+        {
+          "id": "crm-rapportering-steg-14",
+          "type": "steg",
+          "tittel": "Appen oppdaterer dashbordet",
+          "notat": "",
+          "x": 600,
+          "y": 480
+        },
+        {
+          "id": "crm-rapportering-resultat-15",
+          "type": "resultat",
+          "tittel": "Dashbord-side",
           "notat": "Samme tall, alltid oppdatert, filter på selger og periode.",
           "x": 900,
           "y": 240
         },
         {
-          "id": "crm-rapportering-sporsmal-13",
+          "id": "crm-rapportering-sporsmal-16",
           "type": "sporsmal",
           "tittel": "Skal rapporten også gå til styret én gang i måneden?",
           "notat": "",
@@ -1007,37 +1195,37 @@
         {
           "id": "crm-rapportering-e3",
           "from": "crm-rapportering-start-3",
-          "to": "crm-rapportering-steg-6"
+          "to": "crm-rapportering-steg-8"
         },
         {
           "id": "crm-rapportering-e4",
-          "from": "crm-rapportering-steg-6",
+          "from": "crm-rapportering-steg-8",
           "to": "crm-rapportering-data-4"
         },
         {
           "id": "crm-rapportering-e5",
-          "from": "crm-rapportering-steg-6",
-          "to": "crm-rapportering-system-5"
+          "from": "crm-rapportering-system-5",
+          "to": "crm-rapportering-steg-8"
         },
         {
           "id": "crm-rapportering-e6",
-          "from": "crm-rapportering-steg-6",
-          "to": "crm-rapportering-steg-7"
+          "from": "crm-rapportering-system-6",
+          "to": "crm-rapportering-steg-8"
         },
         {
           "id": "crm-rapportering-e7",
-          "from": "crm-rapportering-steg-7",
-          "to": "crm-rapportering-regel-8"
-        },
-        {
-          "id": "crm-rapportering-e8",
-          "from": "crm-rapportering-steg-7",
+          "from": "crm-rapportering-steg-8",
           "to": "crm-rapportering-steg-9"
         },
         {
-          "id": "crm-rapportering-e9",
+          "id": "crm-rapportering-e8",
           "from": "crm-rapportering-steg-9",
-          "to": "crm-rapportering-resultat-10"
+          "to": "crm-rapportering-regel-10"
+        },
+        {
+          "id": "crm-rapportering-e9",
+          "from": "crm-rapportering-system-6",
+          "to": "crm-rapportering-steg-9"
         },
         {
           "id": "crm-rapportering-e10",
@@ -1046,8 +1234,38 @@
         },
         {
           "id": "crm-rapportering-e11",
+          "from": "crm-rapportering-system-7",
+          "to": "crm-rapportering-steg-11"
+        },
+        {
+          "id": "crm-rapportering-e12",
           "from": "crm-rapportering-steg-11",
-          "to": "crm-rapportering-resultat-12"
+          "to": "crm-rapportering-steg-12"
+        },
+        {
+          "id": "crm-rapportering-e13",
+          "from": "crm-rapportering-steg-12",
+          "to": "crm-rapportering-resultat-13"
+        },
+        {
+          "id": "crm-rapportering-e14",
+          "from": "crm-rapportering-resultat-13",
+          "to": "crm-rapportering-person-1"
+        },
+        {
+          "id": "crm-rapportering-e15",
+          "from": "crm-rapportering-steg-12",
+          "to": "crm-rapportering-steg-14"
+        },
+        {
+          "id": "crm-rapportering-e16",
+          "from": "crm-rapportering-steg-14",
+          "to": "crm-rapportering-resultat-15"
+        },
+        {
+          "id": "crm-rapportering-e17",
+          "from": "crm-rapportering-resultat-15",
+          "to": "crm-rapportering-person-2"
         }
       ],
       "eksempel": true,

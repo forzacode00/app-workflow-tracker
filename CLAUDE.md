@@ -16,7 +16,8 @@ Produksjonsbygget får en Content-Security-Policy som meta-tag (`vite.config.ts`
   - `flow.ts`: boksmodell (`Flow`, `FlowNode` med valgfri `ref`, `FlowEdge`), `NODE_META` (etiketter, hint, hvilke typer
     som følger naturlig etter hver type), `orderedSteps`, `neighbours`, `tidyEdges`, `placeNear`, `uniqueIds`.
   - `flowEdit.ts`: `anchorOf` (steget en bladboks henger på) og `stitch` (sy kjeden sammen ved sletting).
-  - `flowBrief.ts`: `SECTIONS` (seksjonene i en modulbrief), `openQuestions`, `renderBrief`. Appen bruker `buildModuleBrief`.
+  - `flowBrief.ts`: `SECTIONS` (seksjonene i en modulbrief), `openQuestions`, `renderBrief`, `nextStep` (det ene som mangler i
+    tankemodellen, brukes som dytt over lerretet). Appen bruker `buildModuleBrief`.
   - `overviewEdges.ts`: pilene i oversikten, sammenslått per retning, uten React Flow-import.
   - `workspace.ts`: arbeidsområde v3 (`Workspace` = moduler + aktiv), `interfaces()` avleder grensesnitt fra `ref`,
     `tidyWorkspace`, `moduleSummary`, `moduleById`. `workspaceStorage.ts`: localStorage `flytdesigner:v3`, løfter v2/v1, backup.
@@ -38,13 +39,15 @@ Produksjonsbygget får en Content-Security-Policy som meta-tag (`vite.config.ts`
   koblinger kommer alltid fra hooken),
   `NodeCard` (én boks, med «+» for å vokse), `NodePanel` (tittel, notat, type, legg til etter), `Palette`, `typeClass`.
   `components/overview/`: `OverviewCanvas` og `ModuleCard` (nettstedet: moduler og grensesnitt).
-  `BriefDrawer` viser modulbrief, nettstedsbrief og JSON-deling. `components/ui/` er håndskrevne shadcn-lignende basiskomponenter.
+  `BriefDrawer` viser åpne spørsmål, modulbrief, nettstedsbrief og JSON-deling. `SlikTenkerDu` er tankemodellen (fem spørsmål,
+  vanlige feil) bak «?» i headeren. `components/ui/` er håndskrevne shadcn-lignende basiskomponenter.
 - Filnavn: PascalCase for komponenter, camelCase for hooks og lib. Tester ligger ved siden av filen de tester.
 - Semantiske fargetokens i `src/index.css`, inkludert én farge per bokstype (`--node-*`). Ingen palettfarger i JSX.
   Fonter er selvhostet via `@fontsource`. React Flow-stilen overstyres nederst i `index.css`.
 
 ## Kommandoer
 - `npx tsx scripts/eksporter-briefer.ts crm docs/eksempler/crm` skriver briefene for et eksempel til Markdown, til gjennomlesing.
+  Kjør den på nytt når `examples/crm.ts` eller brief-formatet endres, så `docs/eksempler/` stemmer.
 - `npm run dev` (port 8080, faller tilbake på 8081 hvis opptatt).
 - `npm test` (vitest), `npm run typecheck`, `npm run lint`, `npm run build`, `npm run e2e` (Playwright, Chromium, starter dev-server på 4173).
 

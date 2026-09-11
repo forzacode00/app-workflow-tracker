@@ -48,12 +48,15 @@ vis testresultat). Tallet på «Vis brief»-knappen er antall åpne spørsmål.
 - Fritt lerret med React Flow: dra, zoom, trekk piler, slett med Delete.
 - Sidepanel for valgt boks: tittel, notat, type, og knapper for å legge til det neste.
 - Palett nederst med alle typer. Legger til koblet fra valgt boks hvis noen er valgt.
-- Eksempelkart ved første besøk, merket som eksempel. «Start egen flyt» gir én målboks.
+- Eksempler i «Vis eksempel» (tilbudsforespørsel med to moduler, CRM med fem), merket som eksempel.
+  «Start egen modul» legger til en modul ved siden av; «Fjern eksempelet» i oversikten tømmer.
+- Tankemodellen i appen: plassholdere i spørsmålsform, «Neste:»-dytt med knapp, «Slik tenker du»,
+  åpne spørsmål øverst i brief-skuffen. Se `iterasjoner-2026-09-11.md`, runde 4.
 - Lagring i nettleseren (`flytdesigner:v2`). Kart fra det gamle skjemaet (v1) løftes automatisk.
 - Brief-skuff med kopiering og JSON-deling. Angre på tøm, eksempel og import.
 - Arbeidsområde med mange moduler, referanser mellom moduler, «Grensesnitt»-seksjon i briefen,
   brief for hele nettstedet, og oversiktsvisning med moduler og piler.
-- 129 vitest og 6 Playwright-tester.
+- 153 vitest og 7 Playwright-tester.
 
 ## Moduler og grensesnitt (krav fra Magnus, 2026-09-11)
 

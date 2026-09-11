@@ -15,12 +15,19 @@ describe("buildModuleBrief", () => {
   it("beskriver hva modulen sender, mottar, og hva de som peker hit gjør", () => {
     const ws = exampleWorkspace();
     const tilbud = buildModuleBrief(ws, "eks-tilbud", "2026-09-11");
-    expect(tilbud).toContain("**Denne modulen sender til «Oppfølging etter tilbud»** via resultat-boksen «Liste over åpne forespørsler»");
-    expect(tilbud).toContain("**«Oppfølging etter tilbud» mottar fra denne modulen** via sin start-boks");
-    expect(tilbud).toContain("**«Oppfølging etter tilbud» både sender til og mottar fra denne modulen** via sin system-boks");
+    /* Begge ender av samme pil står under én overskrift. */
+    expect(tilbud).toContain(
+      "- **Sender til «Oppfølging etter tilbud»**\n  - «Liste over åpne forespørsler» (resultat her). Side i appen. Eldste først, filtrer på status.\n  - «Et tilbud får status «tilbud sendt»» (start i «Oppfølging etter tilbud»).",
+    );
+    expect(tilbud).toContain("- **Mottar fra «Oppfølging etter tilbud»**\n  - «Utfall på forespørselen» (resultat i «Oppfølging etter tilbud»).");
+    expect(tilbud).toContain("- **Sender til og leser fra «Oppfølging etter tilbud»**\n  - «Tilbudsforespørsel» (system i «Oppfølging etter tilbud», sender hit og leser herfra).");
+    expect(tilbud).toContain("Hvilke felter som utveksles er ikke beskrevet. Spør før du bygger.");
+    expect(tilbud).toContain("Hver kanal over er én kontrakt: samme feltnavn i begge moduler, den som sender eier feltene.");
+    expect(tilbud.match(/Målet i «Oppfølging etter tilbud»/g)).toHaveLength(1);
     const oppf = buildModuleBrief(ws, "eks-oppfolging", "2026-09-11");
-    expect(oppf).toContain("**Denne modulen mottar fra «Tilbudsforespørsel»** via start-boksen");
-    expect(oppf).toContain("Målet der: Svar kunder som ber om tilbud innen 24 timer");
+    expect(oppf).toContain("- **Mottar fra «Tilbudsforespørsel»**\n  - «Et tilbud får status «tilbud sendt»» (start her).");
+    expect(oppf).toContain("- **Sender til og leser fra «Tilbudsforespørsel»**\n  - «Tilbudsforespørsel» (system her).");
+    expect(oppf).toContain("Målet i «Tilbudsforespørsel»: Svar kunder som ber om tilbud innen 24 timer");
     expect(oppf).toContain("med 2 moduler");
   });
 
@@ -49,9 +56,13 @@ describe("buildWorkspaceBrief", () => {
     const b = buildWorkspaceBrief(exampleWorkspace(), "2026-09-11");
     expect(b).toContain("2 moduler");
     expect(b).toContain("### Tilbudsforespørsel");
-    expect(b).toContain("**Tilbudsforespørsel → Oppfølging etter tilbud**: Liste over åpne forespørsler");
-    expect(b).toContain("**Tilbudsforespørsel → Oppfølging etter tilbud**: Et tilbud får status «tilbud sendt»");
-    expect(b).toContain("**Oppfølging etter tilbud ↔ Tilbudsforespørsel**: Tilbudsforespørsel");
+    /* Én pil per retning, med begge endene under. */
+    expect(b).toContain(
+      "- **Tilbudsforespørsel → Oppfølging etter tilbud**\n  - «Liste over åpne forespørsler» (resultat i Tilbudsforespørsel). Side i appen. Eldste først, filtrer på status.\n  - «Et tilbud får status «tilbud sendt»» (start i Oppfølging etter tilbud).",
+    );
+    expect(b.match(/\*\*Tilbudsforespørsel → Oppfølging etter tilbud\*\*/g)).toHaveLength(1);
+    expect(b).toContain("- **Oppfølging etter tilbud ↔ Tilbudsforespørsel**\n  - «Tilbudsforespørsel» (system i Oppfølging etter tilbud).");
+    expect(b).toContain("«(leser)» betyr at modulen bare leser, ikke skriver.");
     expect(b).toContain("## Foreslått byggerekkefølge\n\n1. Tilbudsforespørsel\n2. Oppfølging etter tilbud");
     expect(b).toMatch(/Laget med Flytdesigner 2026-09-11\.$/);
   });

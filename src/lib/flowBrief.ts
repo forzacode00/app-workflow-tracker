@@ -26,6 +26,7 @@ export function openQuestions(flow: Flow): string[] {
   if (steps.length === 0) out.push("Ingen steg. Hva skjer etter starten?");
   if (byType(flow, "resultat").length === 0) out.push("Ingen resultatboks. Hva skal noen sitte igjen med?");
   if (byType(flow, "person").length === 0) out.push("Ingen personboks. Hvem bruker modulen, og hvem skal ikke se den?");
+  if (steps.length > 0 && byType(flow, "data").length === 0) out.push("Ingen databoks. Hva må huskes fra ett steg til et annet?");
   if (steps.length > 0 && byType(flow, "regel").length === 0) out.push("Ingen regler. Finnes det virkelig ingen «når … skal …» eller unntak?");
   for (const n of flow.nodes) {
     if (!has(n.tittel) && !has(n.notat) && n.type !== "maal") out.push(`En tom ${NODE_META[n.type].label.toLowerCase()}-boks. Hva skulle stå der?`);
@@ -37,6 +38,28 @@ export function openQuestions(flow: Flow): string[] {
     }
   }
   return out;
+}
+
+export type NextStep = { text: string; type: NodeType; /** Boksen det nye bør henge på, om noen. */ from?: string };
+
+/**
+ * Det ene neste steget i tankemodellen som mangler, i rekkefølgen mål → hvem → start → steg → regel → data → resultat.
+ * Brukes som dytt i appen. Null når modulen har det viktigste.
+ */
+export function nextStep(flow: Flow): NextStep | null {
+  const has = (t: NodeType) => byType(flow, t).some((n) => n.tittel.trim());
+  const maal = byType(flow, "maal")[0];
+  const steps = orderedSteps(flow);
+  const last = steps[steps.length - 1];
+  if (!maal || !maal.tittel.trim()) return null;
+  if (!has("start")) return { text: "Hva setter det i gang?", type: "start", from: maal.id };
+  if (!has("person")) return { text: "Hvem bruker det?", type: "person", from: maal.id };
+  if (steps.length === 0) return { text: "Hva skjer først?", type: "steg", from: byType(flow, "start")[0]?.id ?? maal.id };
+  if (steps.length < 2) return { text: "Hva skjer så?", type: "steg", from: last?.id };
+  if (!has("regel")) return { text: "Er det noe som bare gjelder noen ganger? «Når … skal …»", type: "regel", from: last?.id };
+  if (!has("data")) return { text: "Hva må huskes fra ett steg til et annet?", type: "data", from: last?.id };
+  if (!has("resultat")) return { text: "Hva sitter noen igjen med til slutt?", type: "resultat", from: last?.id };
+  return null;
 }
 
 const BUILD_REQUIREMENTS = [
@@ -86,9 +109,41 @@ export const SECTIONS: readonly Section[] = [
       });
     },
   },
-  { id: "regel", title: NODE_META.regel.briefTitle, body: listOf("regel", "(ingen)") },
-  { id: "data", title: NODE_META.data.briefTitle, body: listOf("data", "(ingen)") },
-  { id: "resultat", title: NODE_META.resultat.briefTitle, body: listOf("resultat", "(ingen)") },
+  {
+    id: "regel",
+    title: NODE_META.regel.briefTitle,
+    body: (flow) => {
+      /* Regler som henger på et steg står under steget. Her bare de som ikke gjør det. */
+      const loose = byType(flow, "regel").filter((r) => !neighbours(flow, r.id).some((n) => n.type === "steg"));
+      const total = byType(flow, "regel").length;
+      if (total === 0) return ["(ingen)"];
+      return loose.length ? loose.flatMap(item) : ["Alle regler står under steget de hører til."];
+    },
+  },
+  {
+    id: "data",
+    title: NODE_META.data.briefTitle,
+    body: (flow) => {
+      const data = byType(flow, "data");
+      if (data.length === 0) return ["(ingen)"];
+      return data.flatMap((d) => {
+        const steg = neighbours(flow, d.id).filter((n) => n.type === "steg");
+        return [...item(d), ...(steg.length ? [`  - Brukes i steg: ${steg.map(title).join("; ")}`] : ["  - Brukes ikke i noe steg. Hvem skriver og leser dette?"])];
+      });
+    },
+  },
+  {
+    id: "resultat",
+    title: NODE_META.resultat.briefTitle,
+    body: (flow) => {
+      const res = byType(flow, "resultat");
+      if (res.length === 0) return ["(ingen)"];
+      return res.flatMap((r) => {
+        const til = neighbours(flow, r.id).filter((n) => n.type === "person");
+        return [...item(r), ...(til.length ? [`  - Til: ${til.map(title).join("; ")}`] : [])];
+      });
+    },
+  },
   { id: "system", title: NODE_META.system.briefTitle, body: listOf("system", "Ingen. Modulen står alene.") },
   {
     id: "sporsmal",

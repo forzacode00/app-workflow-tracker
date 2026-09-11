@@ -170,3 +170,88 @@ førstegangsbrukeren i runde 3: modul → Fjern → Åpne → neste modul.
 ### Ikke rettet, bevisst
 - Regel-panelet tilbyr fortsatt ikke alle typer; paletten gjør det.
 - Mobil-header er to rader. Én rad ville krevd at modulvelgeren forsvant.
+
+## Runde 4: et CRM gjennom appen, og spørsmålet om opplæring
+
+Bestilling fra Magnus: bygg et CRM-system gjennom appen, se hvordan flyten kommer ut, la teamet
+bearbeide det, og vurder om brukerne trenger bedre opplæring i hvordan de skal tenke.
+Team: CRM-ekspert (innhold), Claude-bygger (leser briefene som om den skal bygge), ux-revisor,
+førstegangsbruker.
+
+### CRM-et, slik det ble tegnet
+Fem moduler i `src/lib/examples/crm.ts`, beskrevet med byggeklossen `examples/bygg.ts`
+(beskriv modulen som mål, personer, start, steg med regler/data/resultat/system, få bokser med plass
+og piler). Kontakter → Muligheter → Tilbud, Aktiviteter på tvers, Rapportering leser fra alle. Ti
+grensesnitt. Ligger i «Vis eksempel»-menyen, og briefene er eksportert til `docs/eksempler/crm/`
+med `npx tsx scripts/eksporter-briefer.ts crm docs/eksempler/crm`.
+
+### Slik kom flyten ut, første gjennomlesning
+- **CRM-eksperten:** «Oppfølging» var egentlig en modul på tvers av alle de andre. Omdøpt til
+  Aktiviteter, starter av seg selv (planlagt aktivitet), leser fra Tilbud. Utfall på en mulighet
+  settes ett sted (Muligheter), ikke både i Tilbud og Muligheter. GDPR-sletting som eget steg i
+  Kontakter. Stegene sier hvem som gjør hva («Selger …», «Appen …»).
+- **Claude-byggeren (4/6 første gang):** grensesnittene sa hvilken pil, ikke hvilke felter.
+  Datafelter sto i én lang setning. Regler ble gjentatt under steget og i egen seksjon.
+  Oppfølging var uklar.
+- **Førstegangsbrukeren** (på tomt lerret, ikke CRM): «4 åpne spørsmål» på knappen før man har
+  skrevet noe føles som stryk. Enter-kjeden tar aldri slutt. «Start egen modul» sletter eksempelet
+  man ville sammenligne med. Blander resultat og mål. Glemmer data helt.
+
+### Det som ble rettet i briefene
+- Grensesnitt-seksjonen er én kontrakt per pil: `**Sender til «X»**: «tittel» (resultat).` med
+  feltene fra boksens notat og databoksene den henger på, og målet i den andre modulen én gang.
+  Innkommende: `**«X» mottar herfra**`, `**«X» leser herfra**`. Avsluttes med at hver pil er en
+  kontrakt med samme feltnavn i begge ender.
+- Nettstedsbriefen: én linje per kontrakt i dataenes retning, `(leser)` når modulen bare leser.
+- Regler står bare under steget sitt; egen seksjon lister bare løse regler. Data viser hvilke steg
+  som bruker dem. Resultat viser hvem det går til.
+- Nytt åpent spørsmål: «Ingen databoks. Hva må huskes fra ett steg til et annet?»
+
+### Andre gjennomlesning av Claude-byggeren: 5/6
+Etter rettingene over leste byggeren de eksporterte briefene på nytt. Karakter 5/6: «Tilbud-modulen er
+nå byggbar, jeg kunne startet uten å lese de andre briefene.» Løst: felter i grensesnittene. Delvis:
+gjentakelser (databoksens innhold sto tre ganger i Tilbud-briefen, og samme pil sto fra begge ender),
+og Aktiviteter var både push («Tilbud sendt») og pull (systemboks som leser Tilbud). Innholdsfeil som
+en kollega uten utviklerbakgrunn typisk gjør: sirkulær start (Tilbud starter fra fase «tilbud», men
+Muligheter sa at fasen ble satt av Tilbud), styreleder nevnt uten personboks, PDF til kunden koblet til
+selger, spørsmål gjemt i et systemnotat («… Spør.») mens «Åpne spørsmål» sa «Ingen kjente», steg som
+endrer data uten datakobling. Rettet slik:
+- **Briefen samler én kanal per modulpar og retning.** «Mottar fra «Muligheter»» står én gang, med
+  begge endene under (startboksen her, resultatboksen der). Nettstedsbriefen gjør det samme per pil.
+  Databokser i egen modul nevnes ved navn med «se «Data som lagres»»; innholdet gjentas ikke.
+- **Byggerekkefølgen** skiller hard avhengighet (starter fra) og myk (får resultat fra). CRM-et blir
+  Kontakter → Muligheter → Tilbud → Aktiviteter → Rapportering, ikke Aktiviteter som nummer to.
+- **CRM-innholdet:** selgeren drar kortet til «tilbud», det starter Tilbud; Tilbud setter aldri fasen.
+  Kunde er person og får PDF-en. Under grensen går tilbudet rett fra utkast til sendt. «Svar på
+  tilbudet» sender også «erstattet» og årsak ved avslag. Aktiviteter får «Tilbud sendt» pushet, leser
+  ikke selv. To spørsmålsbokser i Tilbud (hvem godkjenner daglig leders egne tilbud, PDF fra mal i appen).
+- Ikke gjort: felt per linje i databokser. Notatet blir én linje per linje man skriver, så kollegaen
+  kan skrive ett felt per linje selv. Vurderes som mal i panelet senere. Heller ikke automatisk
+  varsel om steg som endrer data uten datakobling; for usikkert hva som er «endrer».
+
+### Trenger brukerne opplæring? Svar: ikke et kurs, men appen må si hvordan man tenker
+Ingen i teamet ville ha en manual. Det som manglet var at appen selv stiller spørsmålene.
+Tankemodellen er fem spørsmål: hva vil du oppnå og hvordan ser du at det virker, hvem bruker det,
+hva setter det i gang og hva skjer så, hva må huskes og hva sitter noen igjen med, hva henger det
+sammen med. Boksene er bare svarene på disse. Gjort i appen:
+- **Plassholdere og hint i spørsmålsform** («Hva setter det i gang?», «Når hva, skal hva?»,
+  «Hva kommer ut, til hvem?»). Startboksen sier eksplisitt at den ikke er målet, resultatboksen at
+  den ikke er handlingen.
+- **Dytt øverst på lerretet:** «Neste: Hva setter det i gang? [+ Start]». `nextStep()` i
+  `flowBrief.ts` finner det ene som mangler i rekkefølgen start → person → steg → steg → regel →
+  data → resultat, og knappen legger boksen der den hører hjemme. Forsvinner når modulen har det
+  viktigste. Tom boks teller ikke som svart.
+- **«?» / «Slik tenker du»** i headeren: de fem spørsmålene og seks vanlige feil (steg som er regel,
+  start som er mål, resultat som er handling, alt i ett steg, ingen data, hva en pil betyr).
+- **Brief-skuffen** lister de åpne spørsmålene øverst, før briefen, så man ser hva som mangler før
+  man kopierer. Tallet på «Vis brief» vises først når målet har tittel.
+- **«Start egen modul»** i et eksempel legger nå til en modul ved siden av, så man kan bygge sin egen
+  mens CRM-et står der. «Fjern eksempelet» finnes i oversikten når alt som er igjen er eksempel.
+- Personboks foreslår bare steg etterpå (ikke start), så Enter-kjeden går dit tankemodellen går.
+
+### Tester og sjekk
+- 153 vitest (nye: `nextStep`, «Ingen databoks», CRM-grensesnitt med felter, «Start egen modul»
+  legger til, «Fjern eksempelet», dytt og hjelp), 7 Playwright (import-testen bruker «Fjern
+  eksempelet»).
+- Skjermbilder ved 360 px og 1280 px, lys og mørk, nå også dytt og hjelp: dyttet ligger over
+  lerretet uten å dekke boksen, hjelpen ruller på mobil, tokens holder i mørk modus.

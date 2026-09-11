@@ -10,76 +10,76 @@ Virker når: et standardtilbud er sendt innen én time etter at muligheten er kl
 
 ## Personer og roller
 
-- **Selger**: Lager og sender.
+- **Selger**: Lager og sender egne tilbud, ser alle.
 - **Daglig leder**: Godkjenner store tilbud.
+- **Kunde**: Ekstern, uten innlogging. Får tilbudet som PDF på e-post.
 
 ## Det som starter modulen
 
-- **En mulighet er klar for tilbud**: Kommer fra Muligheter med kontakt og verdi.
+- **En mulighet er i fase tilbud**: Kommer fra Muligheter med mulighet-id, firma, kontaktperson, verdi, hva kunden ba om og tjeneste.
 
 ## Steg i modulen
 
-1. **Lag tilbudet fra mal** Linjer med timer og fastpris fra malen for tjenesten.
+1. **Selger lager tilbudet fra mal** Malen for tjenesten gir linjene. Én linje er beskrivelse, timer og timepris, eller en fastpris. Sum er uten mva.
    - Bruker data: Tilbud
+   - Bruker data: Tilbudslinje
    - Snakker med: Tilbudsmalene
-2. **Få godkjenning**
-   - Regel: Over 200 000 kr må daglig leder godkjenne før sending. Eksempel: 250 000 kr sendes ikke før leder har trykket «Godkjenn».
-3. **Send tilbudet til kunden**
+2. **Daglig leder godkjenner**
+   - Bruker data: Tilbud
+   - Regel: Over 200 000 kr må daglig leder godkjenne før sending. Eksempel: 250 000 kr sendes ikke før leder har trykket «Godkjenn». 200 000 kr trenger ikke, og går rett fra utkast til sendt. Avslår leder, går tilbudet tilbake til utkast med kommentar.
+3. **Selger sender tilbudet til kunden** PDF fra malen, sendt til valgt kontaktperson. Status blir «sendt» med dato.
+   - Bruker data: Tilbud
    - Snakker med: E-post
    - Gir: Tilbud som PDF på e-post til kunden
-4. **Registrer at tilbudet er sendt**
+4. **Appen melder at tilbudet er sendt**
    - Gir: Tilbud sendt
-5. **Registrer kundens svar**
-   - Regel: Tilbud som ikke er besvart etter 30 dager settes til utløpt. Selgeren får beskjed dagen før.
+5. **Selger registrerer kundens svar**
+   - Regel: Ubesvart tilbud settes til utløpt dagen etter gyldig til. Selgeren får beskjed dagen før. Utløpt regnes som tapt med årsak «ikke svar». Nytt tilbud på samme mulighet er lov, det gamle blir «erstattet».
    - Gir: Svar på tilbudet
 
 ## Regler og unntak
 
-- **Over 200 000 kr må daglig leder godkjenne før sending**: Eksempel: 250 000 kr sendes ikke før leder har trykket «Godkjenn».
-- **Tilbud som ikke er besvart etter 30 dager settes til utløpt**: Selgeren får beskjed dagen før.
+Alle regler står under steget de hører til.
 
 ## Data som lagres
 
 - **Tilbud**
-  - Felter: mulighet, linjer, sum, gyldig til, status, godkjent av.
-  - Statuser: utkast → til godkjenning → sendt → akseptert, avslått eller utløpt.
+  - Felter: mulighet, firma, sendt til (kontaktperson), eier, linjer, sum uten mva, gyldig til, sendt dato, status, godkjent av, kommentar fra leder.
+  - Statuser: utkast → til godkjenning → godkjent → sendt → akseptert, avslått, utløpt eller erstattet. Til godkjenning → utkast når leder avslår.
+  - Brukes i steg: Selger lager tilbudet fra mal; Daglig leder godkjenner; Selger sender tilbudet til kunden
+- **Tilbudslinje**: Felter: tilbud, beskrivelse, timer, timepris, fastpris, sum. Enten timer × timepris eller fastpris, ikke begge.
+  - Brukes i steg: Selger lager tilbudet fra mal
 
 ## Resultater
 
-- **Tilbud som PDF på e-post til kunden**: Med gyldighet 30 dager.
-- **Tilbud sendt**: Oppfølging-modulen tar over fra her.
-- **Svar på tilbudet**: Akseptert, avslått eller utløpt. Muligheter får utfallet.
+- **Tilbud som PDF på e-post til kunden**: Gyldig 30 dager fra sendt dato.
+  - Til: Kunde
+- **Tilbud sendt**: Felter som sendes: tilbud-id, mulighet-id, firma, kontaktperson, selger, sendt dato, gyldig til.
+- **Svar på tilbudet**: Felter som sendes: tilbud-id, mulighet-id, svar (akseptert, avslått, utløpt, erstattet), årsak ved avslått (pris, tidspunkt, valgte konkurrent), dato.
 
 ## Koblinger til andre systemer
 
-- **Tilbudsmalene**: Word-maler per tjeneste i SharePoint. Vi leser dem, endrer dem ikke.
-- **E-post**: Vi sender PDF fra selgerens adresse.
+- **Tilbudsmalene**: Word-maler per tjeneste i SharePoint. Vi leser dem for å hente linjer og tekst; vi endrer dem ikke.
+- **E-post**: PDF sendes fra en felles avsender med selgeren som svar-til, så vi slipper tilgang til hver selgers postkasse.
 
 ## Grensesnitt mot andre moduler
 
-- **Denne modulen mottar fra «Muligheter»** via start-boksen «En mulighet er klar for tilbud».
-  - Hva: Kommer fra Muligheter med kontakt og verdi.
-  - Målet der: Vite hvor hver salgsmulighet står, uten å spørre selgeren
-  - Starter der med: En mulighet registreres på en kontakt
-  - Gir der: Mulighet klar for tilbud; Utfall på muligheten
-- **Denne modulen sender til «Oppfølging»** via resultat-boksen «Tilbud sendt».
-  - Hva: Oppfølging-modulen tar over fra her.
-  - Målet der: Ingen tilbud eller kunde blir glemt
-  - Starter der med: Et tilbud er sendt
-  - Gir der: Aktivitetslogg på kontaktkortet; Utfall etter oppfølging
-- **Denne modulen sender til «Muligheter»** via resultat-boksen «Svar på tilbudet».
-  - Hva: Akseptert, avslått eller utløpt. Muligheter får utfallet.
-  - Målet der: Vite hvor hver salgsmulighet står, uten å spørre selgeren
-  - Starter der med: En mulighet registreres på en kontakt
-  - Gir der: Mulighet klar for tilbud; Utfall på muligheten
-- **«Muligheter» sender til denne modulen** via sin resultat-boks «Mulighet klar for tilbud». Kontakt, verdi og det kunden ba om. Tilbud-modulen tar over.
-- **«Oppfølging» mottar fra denne modulen** via sin start-boks «Et tilbud er sendt». Kommer fra Tilbud.
+- **Mottar fra «Muligheter»**
+  - «En mulighet er i fase tilbud» (start her). Kommer fra Muligheter med mulighet-id, firma, kontaktperson, verdi, hva kunden ba om og tjeneste.
+  - «Mulighet i fase tilbud» (resultat i «Muligheter»). Felter som sendes: mulighet-id, firma, kontaktperson, verdi, hva kunden ba om, tjeneste. Data «Mulighet»: Felter: firma, kontaktperson, beslutningstaker (kontaktperson), tittel, hva kunden ba om, tjeneste, fase, verdi, sannsynlighet, eier, forventet dato, utfall, tapt-årsak, sist aktivitet. Faser: ny → kontaktet → møte → tilbud → vunnet eller tapt. Kan gå bakover, men aldri fra vunnet eller tapt.
+  - Målet i «Muligheter»: Vite hvor hver salgsmulighet står, uten å spørre selgeren
+- **Sender til «Aktiviteter»**
+  - «Tilbud sendt» (resultat her). Felter som sendes: tilbud-id, mulighet-id, firma, kontaktperson, selger, sendt dato, gyldig til. Data «Tilbud», se «Data som lagres».
+  - Målet i «Aktiviteter»: Ingen kunde eller tilbud blir glemt
+- **Sender til «Muligheter»**
+  - «Svar på tilbudet» (resultat her). Felter som sendes: tilbud-id, mulighet-id, svar (akseptert, avslått, utløpt, erstattet), årsak ved avslått (pris, tidspunkt, valgte konkurrent), dato. Data «Tilbud», se «Data som lagres».
 
-Modulene over bygges hver for seg. Bruk grensesnittene som beskrevet; ikke bygg inn deres logikk her.
+Hver kanal over er én kontrakt: samme feltnavn i begge moduler, den som sender eier feltene. Modulene bygges hver for seg; bruk kontrakten, ikke den andre modulens logikk.
 
 ## Åpne spørsmål
 
-- Skal kunden kunne akseptere med én knapp i e-posten?
+- Hvem godkjenner daglig leders egne tilbud over 200 000 kr?
+- Kan PDF-en lages fra en mal i appen i stedet for Word-malene i SharePoint?
 
 ## Krav til bygget
 

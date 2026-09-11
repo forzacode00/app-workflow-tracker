@@ -24,6 +24,14 @@ for (const scheme of ["light", "dark"] as const) {
     await page.reload();
     await page.getByLabel("Tittel").waitFor();
     await page.screenshot({ path: join(out, `${name}-${scheme}-tom.png`) });
+    await page.getByLabel("Tittel").fill("Færre e-poster om tilbud");
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: join(out, `${name}-${scheme}-dytt.png`) });
+    await page.getByRole("button", { name: "Slik tenker du" }).click();
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: join(out, `${name}-${scheme}-hjelp.png`) });
+    await page.getByRole("button", { name: "Lukk", exact: true }).click();
+    await page.getByLabel("Tittel").fill("");
     await page.getByRole("button", { name: "Vis eksempel" }).click();
     await page.getByRole("menuitem", { name: /Tilbudsforespørsel/ }).click();
     await page.waitForTimeout(600);

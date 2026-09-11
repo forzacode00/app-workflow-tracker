@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { emptyFlow, seedNode, type Flow, type FlowNode } from "./flow";
-import { openQuestions } from "./flowBrief";
+import { nextStep, openQuestions } from "./flowBrief";
 import { exampleFlow } from "./flowExample";
 import { workspaceFromFlow } from "./workspace";
 import { buildModuleBrief } from "./workspaceBrief";
@@ -88,8 +88,36 @@ describe("openQuestions", () => {
     expect(q).toContain("«Kunde» (data) er ikke koblet til noe. Hvor hører den hjemme?");
   });
 
+  it("spør om data når det finnes steg men ingen databoks", () => {
+    const f: Flow = { ...emptyFlow(), nodes: [node("s", "steg", "Gjør noe")] };
+    expect(openQuestions(f)).toContain("Ingen databoks. Hva må huskes fra ett steg til et annet?");
+  });
+
   it("spør om regler når det finnes steg men ingen regel", () => {
     const f: Flow = { ...emptyFlow(), nodes: [node("s", "steg", "Gjør noe")] };
     expect(openQuestions(f)).toContain("Ingen regler. Finnes det virkelig ingen «når … skal …» eller unntak?");
+  });
+});
+
+describe("nextStep", () => {
+  it("er null uten mål, og følger tankemodellen i rekkefølge", () => {
+    expect(nextStep(seedFlow())).toBeNull();
+    const f: Flow = { ...emptyFlow(), nodes: [node("m", "maal", "Mål")] };
+    expect(nextStep(f)).toMatchObject({ type: "start", from: "m" });
+    f.nodes.push(node("st", "start", "Skjema"));
+    expect(nextStep(f)).toMatchObject({ type: "person" });
+    f.nodes.push(node("p", "person", "Kunde"));
+    expect(nextStep(f)).toMatchObject({ type: "steg", from: "st" });
+    f.nodes.push(node("s1", "steg", "Ett", "", 0));
+    expect(nextStep(f)).toMatchObject({ type: "steg", from: "s1" });
+    f.nodes.push(node("s2", "steg", "To", "", 100));
+    expect(nextStep(f)).toMatchObject({ type: "regel", from: "s2" });
+    f.nodes.push(node("r", "regel", "Når"), node("d", "data", "Sak"));
+    expect(nextStep(f)).toMatchObject({ type: "resultat" });
+    f.nodes.push(node("o", "resultat", "E-post"));
+    expect(nextStep(f)).toBeNull();
+  });
+  it("er ferdig for eksempelet", () => {
+    expect(nextStep(exampleFlow())).toBeNull();
   });
 });

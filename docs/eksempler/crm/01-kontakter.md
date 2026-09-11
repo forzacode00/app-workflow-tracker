@@ -10,8 +10,8 @@ Virker når: en selger finner riktig kontaktperson på under 30 sekunder, og det
 
 ## Personer og roller
 
-- **Selger**: Intern, innlogget. Ser alle kontakter, endrer sine egne.
-- **Daglig leder**: Intern, innlogget. Ser og endrer alt, kan slette.
+- **Selger**: Intern, innlogget. Ser alle firmaer og personer, endrer dem hen eier.
+- **Daglig leder**: Intern, innlogget. Ser og endrer alt, kan slette og arkivere.
 
 ## Det som starter modulen
 
@@ -19,50 +19,65 @@ Virker når: en selger finner riktig kontaktperson på under 30 sekunder, og det
 
 ## Steg i modulen
 
-1. **Slå opp firmaet** Organisasjonsnummer hentes fra Brønnøysund.
+1. **Selger slår opp firmaet** Organisasjonsnummeret skrives inn; navn og adresse hentes fra Brønnøysund.
    - Snakker med: Brønnøysundregistrene
    - Regel: Finnes org.nummeret fra før, åpnes det eksisterende firmaet. Ingen duplikater. Eksempel: 912 345 678 finnes, da vises kortet i stedet for et nytt skjema.
-2. **Legg til kontaktperson** Navn, e-post, telefon og rolle.
+2. **Selger legger til kontaktperson** Navn, e-post, telefon, rolle og hvor vi fikk kontakten fra.
    - Bruker data: Kontaktperson
    - Regel: E-post må være unik per firma. Eksempel: to «kari@firma.no» på samme firma avvises.
-3. **Sett eier og status** Eier er selgeren som følger opp. Status: prospekt, kunde eller tidligere kunde.
+3. **Selger setter eier og status** Eier er selgeren som følger opp. Status: prospekt, kunde eller tidligere kunde.
    - Bruker data: Firma
-4. **Vis kontaktkortet**
+   - Regel: Vunnet mulighet setter firmaet til kunde automatisk. Ellers flytter bare eier eller daglig leder status. Eksempel: prospekt blir kunde når Tilbud melder «akseptert».
+4. **Appen viser kontaktkortet**
    - Snakker med: Outlook
    - Gir: Kontaktkort med alt om firmaet
+5. **Daglig leder sletter eller arkiverer** Kontaktperson slettes på forespørsel. Firma med vunnet tilbud arkiveres i stedet for å slettes.
+   - Bruker data: Kontaktperson
+   - Regel: Slettet kontaktperson: aktivitetene beholdes anonymisert. GDPR: navn og e-post fjernes, «hva som ble sagt» beholdes uten person. Prospekter uten aktivitet på 24 måneder slettes automatisk.
 
 ## Regler og unntak
 
-- **Finnes org.nummeret fra før, åpnes det eksisterende firmaet**: Ingen duplikater. Eksempel: 912 345 678 finnes, da vises kortet i stedet for et nytt skjema.
-- **E-post må være unik per firma**: Eksempel: to «kari@firma.no» på samme firma avvises.
+Alle regler står under steget de hører til.
 
 ## Data som lagres
 
 - **Firma**
-  - Felter: navn, org.nummer, bransje, eier, status, opprettet.
-  - Statuser: prospekt → kunde → tidligere kunde. Bare eier eller daglig leder flytter status.
-- **Kontaktperson**: Felter: navn, e-post, telefon, rolle, firma, sist kontaktet.
+  - Felter: navn, org.nummer, adresse, bransje, eier, status, sist kontakt, opprettet.
+  - Statuser: prospekt → kunde → tidligere kunde. Eier eller daglig leder flytter, unntatt kunde som settes av vunnet tilbud.
+  - Brukes i steg: Selger setter eier og status
+- **Kontaktperson**: Felter: navn, e-post, telefon, rolle, firma, kilde (hvor vi fikk kontakten), status (aktiv eller sluttet), sist kontaktet.
+  - Brukes i steg: Selger legger til kontaktperson; Daglig leder sletter eller arkiverer
 
 ## Resultater
 
 - **Kontaktkort med alt om firmaet**: Side i appen: firma, personer, eier, status og aktivitetslogg. Knapp som åpner e-post i Outlook.
+  - Til: Selger
 
 ## Koblinger til andre systemer
 
-- **Brønnøysundregistrene**: Vi henter firmanavn og adresse fra org.nummer. Skal ikke endres.
-- **Outlook**: Vi åpner e-post til kontaktpersonen derfra. Vi lagrer ingenting i Outlook.
+- **Brønnøysundregistrene**: Vi henter firmanavn og adresse fra org.nummer. Åpent API, ingen innlogging.
+- **Outlook**: Vi åpner en ny e-post til kontaktpersonen. Vi lagrer ingenting i Outlook.
 
 ## Grensesnitt mot andre moduler
 
-- **«Muligheter» mottar fra denne modulen** via sin start-boks «En mulighet registreres på en kontakt». Selgeren velger et firma fra Kontakter og skriver hva muligheten gjelder.
-- **«Oppfølging» sender til denne modulen** via sin resultat-boks «Aktivitetslogg på kontaktkortet». Vises under firmaet i Kontakter.
-- **«Rapportering» sender til denne modulen** via sin system-boks «Kontakter». Vi leser firma og eier derfra for å gruppere per selger.
+- **Sender til «Muligheter»**
+  - «En mulighet registreres på et firma» (start i «Muligheter»). Selgeren velger firma og kontaktperson fra Kontakter og skriver hva muligheten gjelder. Henvendelser fra nettsiden kommer inn uten eier.
+  - Hvilke felter som utveksles er ikke beskrevet. Spør før du bygger.
+  - Målet i «Muligheter»: Vite hvor hver salgsmulighet står, uten å spørre selgeren
+- **Mottar fra «Aktiviteter»**
+  - «Aktivitetslogg på kontaktkortet» (resultat i «Aktiviteter»). Felter som sendes: firma, dato, type, notat, utført av. Data «Aktivitet»: Felter: type, dato, notat, firma, mulighet, tilbud, utført av, status. Statuser: planlagt → gjort, eller planlagt → avlyst.
+  - Målet i «Aktiviteter»: Ingen kunde eller tilbud blir glemt
+- **Sender til «Rapportering»**
+  - «Kontakter» (system i «Rapportering», leser herfra). Vi leser firma og eier for å gruppere per selger.
+  - Hvilke felter som utveksles er ikke beskrevet. Spør før du bygger.
+  - Målet i «Rapportering»: Mandagsmøtet starter med tall, ikke med spørsmål
 
-Modulene over bygges hver for seg. Bruk grensesnittene som beskrevet; ikke bygg inn deres logikk her.
+Hver kanal over er én kontrakt: samme feltnavn i begge moduler, den som sender eier feltene. Modulene bygges hver for seg; bruk kontrakten, ikke den andre modulens logikk.
 
 ## Åpne spørsmål
 
 - Skal vi importere det gamle regnearket, eller starte på nytt?
+- Hva skjer med et vunnet tilbud: skal det bli et prosjekt i en egen modul?
 
 ## Krav til bygget
 

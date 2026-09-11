@@ -109,7 +109,9 @@ test("import av JSON viser boksene i utsnittet, og angre tar dem bort", async ({
   await expect(page.locator(".react-flow__node")).toHaveCount(17);
   await expect.poll(async () => (await stored(page))?.moduler?.length ?? 0).toBe(2);
   const json = JSON.stringify(await stored(page));
-  await page.getByRole("button", { name: "Start egen modul" }).click();
+  // «Start egen modul» legger nå til en modul ved siden av; eksempelet fjernes fra oversikten.
+  await page.getByRole("button", { name: "Oversikt" }).click();
+  await page.getByRole("button", { name: "Fjern eksempelet" }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(1);
   await expect(page.getByLabel("Modul", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: /^Vis brief/ }).click();
