@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+/* Semantiske tokens. Komponenter bruker bare disse, aldri palettfarger eller hex. */
+:root {
+  --background: #f2f5f5;
+  --foreground: #15211f;
+  --card: #ffffff;
+  --card-foreground: #15211f;
+  --subtle: #e9eeee;
+  --muted-foreground: #7a8a88;
+  --secondary-foreground: #4b5b59;
+  --border: #d3dcda;
+  --input: #bfcbc8;
+  --primary: #0f766e;
+  --primary-foreground: #ffffff;
+  --primary-soft: #d9efec;
+  --warning: #b45309;
+  --warning-soft: #fbebd5;
+  --success: #15803d;
+  --success-soft: #dcf2e3;
+  --destructive: #b42318;
+  --code: #0e1716;
+  --code-foreground: #dce7e4;
+  --code-heading: #8fd9cf;
+  --code-dim: #7e9491;
+  --ring: #0f766e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f1616;
+    --foreground: #e4ecea;
+    --card: #161f1f;
+    --card-foreground: #e4ecea;
+    --subtle: #1e2a29;
+    --muted-foreground: #8a9b98;
+    --secondary-foreground: #aebdba;
+    --border: #2b3937;
+    --input: #3a4a48;
+    --primary: #3fbfb2;
+    --primary-foreground: #0b1514;
+    --primary-soft: #173d3a;
+    --warning: #f0a04b;
+    --warning-soft: #3d2a12;
+    --success: #5dd08a;
+    --success-soft: #153a24;
+    --destructive: #f28b82;
+    --code: #0a100f;
+    --code-foreground: #d5e2df;
+    --code-heading: #8fd9cf;
+    --code-dim: #6f8582;
+    --ring: #3fbfb2;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-subtle: var(--subtle);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-destructive: var(--destructive);
+  --color-code: var(--code);
+  --color-code-foreground: var(--code-foreground);
+  --color-code-heading: var(--code-heading);
+  --color-code-dim: var(--code-dim);
+  --color-ring: var(--ring);
+
+  --font-display: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    color-scheme: light dark;
+  }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+    line-height: 1.15;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+}
