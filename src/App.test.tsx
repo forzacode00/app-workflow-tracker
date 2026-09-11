@@ -21,15 +21,20 @@ describe("App", () => {
     expect(localStorage.getItem(WELCOME_KEY)).toBe("1");
   });
 
-  it("velkomsten vises ikke når noe er lagret fra før, selv om flagget mangler", () => {
+  it("velkomsten vises også for den som har noe fra før, med «Fortsett der du slapp», og kan hentes fram igjen bak «?»", async () => {
     localStorage.removeItem(WELCOME_KEY);
     localStorage.setItem(
       "flytdesigner:v3",
       JSON.stringify({ versjon: 3, aktiv: "m1", moduler: [{ id: "m1", navn: "", x: 0, y: 0, eksempel: false, edges: [], nodes: [{ id: "maal", type: "maal", tittel: "Noe", notat: "", x: 0, y: 0 }] }] }),
     );
+    const user = userEvent.setup();
     render(<App />);
-    expect(screen.queryByRole("button", { name: "Start med spørsmålene" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start med spørsmålene" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Fortsett der du slapp" }));
     expect(screen.getByRole("button", { name: /^Vis bestilling/ })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Slik tenker du" }));
+    await user.click(screen.getByRole("button", { name: "Vis introduksjonen igjen" }));
+    expect(screen.getByRole("button", { name: "Start med spørsmålene" })).toBeInTheDocument();
   });
 
   it("intervjuet: ett spørsmål om gangen, og svarene blir bokser på lerretet med bestilling", async () => {

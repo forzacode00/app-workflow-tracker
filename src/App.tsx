@@ -32,8 +32,9 @@ export default function App() {
   /* Rett etter intervjuet: si hva neste steg er, i stedet for å dytte om det som ble hoppet over. */
   const [fraIntervju, setFraIntervju] = useState(false);
   const { ws, flow, module, undo } = actions;
-  /* Første gang, med tomt nettsted: si hva appen er til for før noe annet. */
-  const [skjerm, setSkjerm] = useState<Skjerm>(() => (ws.moduler.length === 1 && isBlank(asFlow(ws.moduler[0]!)) && !hasSeenWelcome() ? "velkommen" : null));
+  /* Første gang i denne nettleseren: si hva appen er til for før noe annet, også for dem som prøvde før velkomsten fantes. */
+  const [skjerm, setSkjerm] = useState<Skjerm>(() => (hasSeenWelcome() ? null : "velkommen"));
+  const harNoe = !(ws.moduler.length === 1 && isBlank(asFlow(ws.moduler[0]!)));
 
   /* Bestillingene er tunge for store nettsteder. De bygges bare når skuffen er åpen, ellers på forespørsel. */
   const moduleBrief = useMemo(() => (briefOpen ? buildModuleBrief(ws) : ""), [briefOpen, ws]);
@@ -158,7 +159,7 @@ export default function App() {
     "absolute top-3 right-14 left-3 m-0 rounded-md border border-border bg-card/95 px-3 py-2 text-center text-[13px] text-secondary-foreground shadow-sm sm:right-auto sm:left-1/2 sm:w-[min(92%,460px)] sm:-translate-x-1/2";
 
   if (skjerm === "velkommen") {
-    return <Velkommen onStart={() => leaveWelcome("intervju")} onExample={welcomeExample} onCanvas={() => leaveWelcome(null)} />;
+    return <Velkommen harNoe={harNoe} onStart={() => leaveWelcome("intervju")} onExample={welcomeExample} onCanvas={() => leaveWelcome(null)} />;
   }
   if (skjerm === "intervju") {
     return (
@@ -330,7 +331,7 @@ export default function App() {
         </div>
       )}
 
-      <SlikTenkerDu open={helpOpen} onClose={closeHelp} />
+      <SlikTenkerDu open={helpOpen} onClose={closeHelp} onIntro={() => { setHelpOpen(false); setSkjerm("velkommen"); }} />
       <BriefDrawer
         open={briefOpen}
         initialTab={overview ? "nettsted" : "modul"}

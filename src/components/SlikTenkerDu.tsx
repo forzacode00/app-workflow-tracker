@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 
-type Props = { open: boolean; onClose: () => void };
+type Props = { open: boolean; onClose: () => void; /** Vis velkomsten på nytt. */ onIntro: () => void };
 
 /** Tankemodellen i fem setninger, og de vanligste feilene. Ikke en manual. */
 const TANKEMODELL = [
@@ -21,7 +21,7 @@ const FEIL = [
   ["Pil betyr tre ting.", "Mellom steg: rekkefølge. Fra steg til regel, data og resultat: hører til. For system: retningen sier om dere sender eller henter."],
 ] as const;
 
-export function SlikTenkerDu({ open, onClose }: Props) {
+export function SlikTenkerDu({ open, onClose, onIntro }: Props) {
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -64,6 +64,11 @@ export function SlikTenkerDu({ open, onClose }: Props) {
           ))}
         </ul>
         <p className="m-0 text-xs text-muted-foreground">Trykk «Vis eksempel» for å se to ferdige eksempler. Bestillingen viser øverst hva som mangler.</p>
+        <div>
+          <Button size="sm" onClick={onIntro}>
+            Vis introduksjonen igjen
+          </Button>
+        </div>
       </div>
     </div>
   );

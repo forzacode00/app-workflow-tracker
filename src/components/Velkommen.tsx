@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/Button";
 
 type Props = {
+  /** Det ligger allerede noe tegnet i denne nettleseren. */
+  harNoe: boolean;
   onStart: () => void;
   onExample: () => void;
   onCanvas: () => void;
@@ -14,7 +16,7 @@ const TRINN = [
 ] as const;
 
 /** Første skjerm. Sier hva appen er til for, før den ber om noe som helst. */
-export function Velkommen({ onStart, onExample, onCanvas }: Props) {
+export function Velkommen({ harNoe, onStart, onExample, onCanvas }: Props) {
   return (
     <main className="flex min-h-dvh flex-col items-center overflow-y-auto bg-background px-4 py-8 sm:justify-center sm:px-8">
       <div className="flex w-full max-w-[560px] flex-col gap-6">
@@ -47,7 +49,7 @@ export function Velkommen({ onStart, onExample, onCanvas }: Props) {
           </Button>
           <Button onClick={onExample}>Se et ferdig eksempel</Button>
           <Button variant="ghost" onClick={onCanvas}>
-            Tegn selv på lerretet
+            {harNoe ? "Fortsett der du slapp" : "Tegn selv på lerretet"}
           </Button>
         </div>
         <p className="m-0 text-xs text-muted-foreground">Alt lagres bare i denne nettleseren. Ingenting sendes noe sted før du selv limer det inn i Claude.</p>

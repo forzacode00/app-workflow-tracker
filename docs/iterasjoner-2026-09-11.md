@@ -306,6 +306,11 @@ det samme til man trykker på en boks, dyttet holdes tilbake til da, «Kopier be
 på mobil, og «nettsted» er borte fra toastene. Ikke gjort: «nettsted» i oversikten og
 nettstedsbriefen, det er Magnus' eget begrep for helheten.
 
+### Etter push: kollegaen fikk «det samme som sist»
+Velkomsten ble bare vist når nettleseren var helt tom, og kollegaen hadde lagring fra forrige test.
+Rettet: velkomsten vises én gang per nettleser uansett, med «Fortsett der du slapp» for den som har
+noe fra før, og «Vis introduksjonen igjen» bak «?».
+
 ### Magnus' merknad
 «En må trene bruken litt før man kaster den ut.» Enig. Anbefalt: Magnus går gjennom intervjuet
 selv med en ekte sak, så én kollega med Magnus ved siden av, før lenken sendes bredt. Det som
