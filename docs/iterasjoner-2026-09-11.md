@@ -83,3 +83,32 @@ se hele nettstedet med grensesnittene mellom. Det tas i runde 2 (se `konsept.md`
 - 129 vitest (var 99): arbeidsområde, lagring med løfting fra v2/v1, brief med grensesnitt,
   hooken (moduler, referanser, søm ved sletting), og appen (referanse blir grensesnitt i brief og oversikt).
 - 6 Playwright-tester (ny: oversikten viser moduler og piler, åpner modul, referanse vises i panelet).
+
+### Rettet etter runde 2-gjennomgangen
+- **Angre stemmer alltid.** Kopien tas inne i oppdateringen, ikke fra en ref som oppdateres etterpå.
+  Fjerning av boks og pil i samme hendelse gir hele tilstanden tilbake. Endringer som ikke endrer noe,
+  overskriver ikke kopien.
+- **Søm ved sletting** går gjennom flere fjernede bokser, lager ikke duplikater og holder seg under taket på piler.
+- **Ankerregelen** foretrekker steget som peker inn i bladboksen. Personer er ikke blad lenger, så «Utføres av» i briefen stemmer.
+- **Kant-id-er i oversikten** er unike på tvers av moduler. Flere grensesnitt samme vei mellom to moduler
+  slås sammen til én pil med etiketter. Ukjent retning tegnes stiplet uten pilhode.
+- **Modulnavn i briefen** går gjennom escaping også i grensesnitt-seksjonen (målt injeksjon fra sikkerhet).
+  Innkommende grensesnitt sier hva den andre modulen gjør mot denne. Piler i nettstedsbriefen går alltid i
+  dataenes retning, som i oversikten. Ny seksjon «Foreslått byggerekkefølge».
+- **Import** krever `versjon: 2` for kart, avviser vilkårlige objekter, fjerner fremmede referanser, gir ny id ved kollisjon.
+  Uleselig v2/v1 kopieres til backup før eldre nøkler ryddes. Referanser fra typer som ikke kan peke, ryddes.
+- **UI:** «Start egen modul» fjerner hele eksempelet. «Fjern» på valgt modul i oversikten, med angre.
+  «Mottar fra / Sender til / Snakker med en annen modul?» per bokstype; med én modul tilbys «+ Lag ny modul».
+  Boksen viser navnet på modulen den peker på. Skuffen åpner «Hele nettstedet» fra oversikten, ordentlige
+  faner med piltaster, egen tekst for hvilken modul briefen gjelder. Meldinger øverst, ikke over paletten.
+  Header trimmet på mobil. Mer luft mellom nye moduler. Briefer bygges bare når skuffen er åpen.
+- **Ord:** «modul» og «nettsted» overalt i UI og brief; «flyt» og «arbeidsområde» er borte fra det brukeren ser.
+- **Tester:** 133 vitest, 7 Playwright (ny: dra modul i oversikten, fjern med angre). `waitForTimeout` erstattet med polling.
+
+### Utsatt fra runde 2
+| Forslag | Fra | Hvorfor ikke nå |
+|---|---|---|
+| Dele hooken i redigering og lagring, async port | arkitekt | Forutsetning for Supabase; tas når delt lagring starter. |
+| `aktiv` ut av lagret nettsted, UUID på moduler | arkitekt | Samme. |
+| Pil mellom moduler i oversikten som lager grensesnitt | UX | Runde 3 vurderer om det trengs etter at retningen er tydeligere i panelet. |
+| Bunnskuff som kan dras på mobil | førstegangsbruker | Middels. Panelet er 45 vh og lerretet sentrerer på ny boks nå. |

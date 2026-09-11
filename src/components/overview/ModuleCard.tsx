@@ -1,5 +1,6 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { memo } from "react";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 export type ModuleCardData = {
@@ -10,10 +11,14 @@ export type ModuleCardData = {
   aktiv: boolean;
   eksempel: boolean;
   onOpen: (id: string) => void;
+  onRemove: (id: string) => void;
 };
 export type ModuleNode = Node<ModuleCardData, "modul">;
 
-/** Én modul i oversikten. Klikk på «Åpne» går inn i modulen. */
+/* Håndtakene ankrer pilene, men kan ikke brukes: grensesnitt lages inne i modulen. */
+const HANDLE = "!opacity-0 !pointer-events-none";
+
+/** Én modul i oversikten. «Åpne» går inn i modulen; «Fjern» finnes når modulen er valgt. */
 export const ModuleCard = memo(function ModuleCard({ id, data, selected }: NodeProps<ModuleNode>) {
   return (
     <div
@@ -23,27 +28,46 @@ export const ModuleCard = memo(function ModuleCard({ id, data, selected }: NodeP
         selected && "ring-2 ring-ring ring-offset-2 ring-offset-background",
       )}
     >
-      <Handle type="target" position={Position.Left} className="!size-3 !border-2 !border-card !bg-muted-foreground" />
-      <span className="block text-[10.5px] font-semibold tracking-[0.08em] text-primary uppercase">Modul{data.eksempel ? " · eksempel" : ""}</span>
+      <Handle type="target" position={Position.Left} className={HANDLE} />
+      <span className="block text-[11.5px] font-semibold tracking-[0.08em] text-primary uppercase">Modul{data.eksempel ? " · eksempel" : ""}</span>
       <span className="block text-[15px] leading-snug font-bold">{data.navn}</span>
-      {data.maal && <span className="mt-1 line-clamp-2 block text-xs text-secondary-foreground">{data.maal}</span>}
+      {data.maal && data.maal !== data.navn && <span className="mt-1 line-clamp-2 block text-xs text-secondary-foreground">{data.maal}</span>}
       <div className="mt-2 flex items-center justify-between gap-2 text-xs text-muted-foreground tabular-nums">
         <span>
           {data.bokser} {data.bokser === 1 ? "boks" : "bokser"}
-          {data.sporsmal > 0 && <span className="ml-2 rounded-full bg-warning-soft px-1.5 font-semibold text-warning">{data.sporsmal} åpne</span>}
+          {data.sporsmal > 0 && (
+            <span className="ml-2 rounded-full bg-warning-soft px-1.5 font-semibold text-warning">
+              {data.sporsmal} {data.sporsmal === 1 ? "åpent spørsmål" : "åpne spørsmål"}
+            </span>
+          )}
         </span>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            data.onOpen(id);
-          }}
-          className="nodrag min-h-9 rounded-md border border-input bg-card px-2.5 text-[13px] font-medium text-foreground hover:bg-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        >
-          Åpne
-        </button>
+        <div className="flex gap-1.5">
+          {selected && (
+            <Button
+              size="sm"
+              variant="danger"
+              className="nodrag"
+              onClick={(e) => {
+                e.stopPropagation();
+                data.onRemove(id);
+              }}
+            >
+              Fjern
+            </Button>
+          )}
+          <Button
+            size="sm"
+            className="nodrag"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onOpen(id);
+            }}
+          >
+            Åpne
+          </Button>
+        </div>
       </div>
-      <Handle type="source" position={Position.Right} className="!size-3 !border-2 !border-card !bg-muted-foreground" />
+      <Handle type="source" position={Position.Right} className={HANDLE} />
     </div>
   );
 });

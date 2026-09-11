@@ -12,17 +12,18 @@ import { TYPE_CLASS } from "./typeClass";
 
 type Props = {
   node: FlowNode;
-  /** De andre modulene i arbeidsområdet, som boksen kan peke på. */
+  /** De andre modulene i nettstedet, som boksen kan peke på. */
   otherModules: Module[];
   actions: Pick<FlowActions, "updateNode" | "addNode" | "removeNodes" | "select">;
   onRemoved: (count: number) => void;
+  onNewModule: () => void;
 };
 
 const TYPE_OPTIONS = NODE_TYPES.map((t) => ({ value: t, label: NODE_META[t].label }));
 const NO_REF = "";
 
-/** Panelet for den valgte boksen: tittel, «legg til etter», notat, modulkobling, type og fjern. */
-export function NodePanel({ node, otherModules, actions, onRemoved }: Props) {
+/** Panelet for den valgte boksen: tittel, modulkobling, «legg til etter», notat, type og fjern. */
+export function NodePanel({ node, otherModules, actions, onRemoved, onNewModule }: Props) {
   const meta = NODE_META[node.type];
   const titleRef = useRef<HTMLInputElement>(null);
   const lastId = useRef<string | null>(null);
@@ -37,7 +38,14 @@ export function NodePanel({ node, otherModules, actions, onRemoved }: Props) {
   }, [node.id, node.tittel]);
 
   const growType = meta.next[0];
-  const refOptions = [{ value: NO_REF, label: "Nei, dette er noe utenfor nettstedet" }, ...otherModules.map((m) => ({ value: m.id, label: moduleName(m) }))];
+  const refOptions = [{ value: NO_REF, label: "Nei" }, ...otherModules.map((m) => ({ value: m.id, label: moduleName(m) }))];
+  const refLabel = node.type === "start" ? "Mottar fra en annen modul?" : node.type === "resultat" ? "Sender til en annen modul?" : "Snakker med en annen modul?";
+  const refHint =
+    node.type === "start"
+      ? "Velg modulen som setter denne i gang. Det blir et grensesnitt i briefen, og en pil inn i oversikten."
+      : node.type === "resultat"
+        ? "Velg modulen som skal ta imot dette. Det blir et grensesnitt i briefen, og en pil ut i oversikten."
+        : "Velg modulen. Pilene på lerretet avgjør om vi sender, mottar eller begge deler.";
 
   return (
     <aside
@@ -75,6 +83,28 @@ export function NodePanel({ node, otherModules, actions, onRemoved }: Props) {
         />
       </Field>
 
+      {canRef(node.type) &&
+        (otherModules.length ? (
+          <Field id="node-ref" label={refLabel} hint={refHint}>
+            <Select
+              id="node-ref"
+              options={refOptions}
+              value={node.ref ?? NO_REF}
+              onValueChange={(ref) => actions.updateNode(node.id, { ref: ref === NO_REF ? undefined : ref })}
+            />
+          </Field>
+        ) : (
+          <div className="flex flex-col gap-1.5 rounded-md border border-dashed border-input p-3">
+            <span className="text-sm font-semibold text-secondary-foreground">{refLabel}</span>
+            <span className="text-xs text-secondary-foreground">Når nettstedet har flere moduler, kan denne boksen peke på en av dem. Det blir et grensesnitt.</span>
+            <div>
+              <Button size="sm" onClick={onNewModule}>
+                + Lag ny modul
+              </Button>
+            </div>
+          </div>
+        ))}
+
       {meta.next.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <span className="text-sm font-semibold text-secondary-foreground">Legg til etter denne</span>
@@ -91,26 +121,6 @@ export function NodePanel({ node, otherModules, actions, onRemoved }: Props) {
       <Field id="node-notat" label="Notat" hint="Valgfritt. Alt du vil Claude skal vite om denne boksen.">
         <Textarea id="node-notat" className="min-h-24" value={node.notat} onChange={(e) => actions.updateNode(node.id, { notat: e.target.value })} />
       </Field>
-
-      {canRef(node.type) && (
-        <Field
-          id="node-ref"
-          label="Peker på en annen modul?"
-          hint={
-            otherModules.length
-              ? "Da blir dette et grensesnitt i briefen, og en pil i oversikten."
-              : "Lag flere moduler i oversikten, så kan denne boksen peke på en av dem."
-          }
-        >
-          <Select
-            id="node-ref"
-            options={refOptions}
-            value={node.ref ?? NO_REF}
-            onValueChange={(ref) => actions.updateNode(node.id, { ref: ref === NO_REF ? undefined : ref })}
-            disabled={otherModules.length === 0}
-          />
-        </Field>
-      )}
 
       <details>
         <summary className="cursor-pointer text-sm font-semibold text-secondary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">

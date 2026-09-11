@@ -15,12 +15,12 @@ describe("buildFlowBrief", () => {
     expect(headings).toEqual([
       "## Mål og problemet i dag",
       "## Personer og roller",
-      "## Det som starter flyten",
-      "## Steg i flyten",
+      "## Det som starter modulen",
+      "## Steg i modulen",
       "## Regler og unntak",
       "## Data som lagres",
       "## Resultater",
-      "## Koblinger til andre systemer og flyter",
+      "## Koblinger til andre systemer",
       "## Åpne spørsmål",
       "## Krav til bygget",
     ]);
@@ -53,7 +53,7 @@ describe("buildFlowBrief", () => {
     const brief = buildFlowBrief(seedFlow(), "2026-09-11");
     expect(brief).toContain("# Brief: (uten navn)");
     expect(brief).toContain("(ikke beskrevet)");
-    expect(brief).toContain("Ingen. Flyten står alene.");
+    expect(brief).toContain("Ingen. Modulen står alene.");
   });
 
   it("skriver datoen sist", () => {
@@ -68,7 +68,7 @@ describe("openQuestions", () => {
 
   it("finner det som mangler i et nesten tomt kart", () => {
     const q = openQuestions(seedFlow());
-    expect(q).toContain("Ingen startboks. Hva setter flyten i gang?");
+    expect(q).toContain("Ingen startboks. Hva setter modulen i gang?");
     expect(q).toContain("Ingen steg. Hva skjer etter starten?");
     expect(q).toContain("Ingen resultatboks. Hva skal noen sitte igjen med?");
   });

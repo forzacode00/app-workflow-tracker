@@ -4,14 +4,14 @@ import { NODE_META, type FlowNode, type NodeType } from "@/lib/flow";
 import { cn } from "@/lib/utils";
 import { TYPE_CLASS } from "./typeClass";
 
-export type CardNode = Node<{ node: FlowNode; onGrow: (fromId: string, type: NodeType) => void }, "boks">;
+export type CardNode = Node<{ node: FlowNode; refName?: string; onGrow: (fromId: string, type: NodeType) => void }, "boks">;
 
 /* Håndtakene er 16 px med mus og 24 px på berøring. Trykkflaten rundt er større via ::before i index.css. */
 const HANDLE = "!size-4 !border-2 !border-card !bg-muted-foreground pointer-coarse:!size-6";
 
 /** Én boks på lerretet: type øverst, tittel, og en «+» i hjørnet som lar kartet vokse fra boksen. */
 export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<CardNode>) {
-  const { node, onGrow } = data;
+  const { node, refName, onGrow } = data;
   const meta = NODE_META[node.type];
   const grow = meta.next[0];
   return (
@@ -29,7 +29,7 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<Car
         {node.tittel || meta.placeholder}
       </span>
       {node.notat && <span className="mt-0.5 line-clamp-2 block text-xs text-secondary-foreground">{node.notat}</span>}
-      {node.ref && <span className="mt-1 block text-[11px] font-medium text-primary">↔ Peker på en annen modul</span>}
+      {node.ref && <span className="mt-1 block truncate text-[11px] font-medium text-primary">↔ {refName ?? "annen modul"}</span>}
       <Handle type="source" position={Position.Right} className={HANDLE} title="Trekk herfra for å koble til en annen boks" />
       {grow && (
         <button

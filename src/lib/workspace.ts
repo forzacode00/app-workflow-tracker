@@ -2,7 +2,7 @@ import { z } from "zod";
 import { flowEdgeSchema, flowNodeSchema, MAX_COORD, MAX_EDGES, MAX_NODES, newId, seedNode, SHORT, tidyEdges, type Flow, type FlowNode } from "./flow";
 
 /**
- * Et arbeidsområde er alle modulene som til sammen blir ett nettsted eller økosystem.
+ * Et nettsted er alle modulene som til sammen blir ett produkt eller økosystem.
  * Hver modul er et kart (samme form som `Flow`), med egen id og plass i oversikten.
  */
 export const MAX_MODULES = 50;
@@ -44,8 +44,8 @@ export type Workspace = z.infer<typeof workspaceSchema>;
 export const REF_TYPES = ["start", "resultat", "system"] as const;
 export const canRef = (type: FlowNode["type"]): boolean => (REF_TYPES as readonly string[]).includes(type);
 
-export const OVERVIEW_OFFSET_X = 340;
-export const OVERVIEW_OFFSET_Y = 200;
+export const OVERVIEW_OFFSET_X = 420;
+export const OVERVIEW_OFFSET_Y = 220;
 
 export const newModuleId = (): string => newId("m");
 
@@ -65,33 +65,41 @@ export const seedWorkspace = (): Workspace => {
   return { versjon: 3, moduler: [m], aktiv: m.id };
 };
 
-/** Løfter ett kart (v2) til et arbeidsområde med én modul. */
+/** Løfter ett kart (v2) til et nettsted med én modul. Referanser fra et fremmed nettsted fjernes. */
 export const workspaceFromFlow = (flow: Flow, id = "m1"): Workspace => ({
   versjon: 3,
-  moduler: [{ id, navn: flow.navn, nodes: flow.nodes, edges: flow.edges, eksempel: flow.eksempel, x: 0, y: 0 }],
+  moduler: [{ id, navn: flow.navn, nodes: flow.nodes.map(stripRef), edges: flow.edges, eksempel: flow.eksempel, x: 0, y: 0 }],
   aktiv: id,
 });
+
+const stripRef = (n: FlowNode): FlowNode => {
+  if (n.ref === undefined) return n;
+  const { ref: _ref, ...rest } = n;
+  return rest;
+};
 
 /** Modulen som `Flow`, til alt som bare ser ett kart (brief, lerret). */
 export const asFlow = (m: Module): Flow => ({ versjon: 2, navn: m.navn, nodes: m.nodes, edges: m.edges, eksempel: m.eksempel });
 
 export const activeModule = (ws: Workspace): Module => ws.moduler.find((m) => m.id === ws.aktiv) ?? ws.moduler[0]!;
 
-export const moduleName = (m: Module): string => {
+export const moduleName = (m: Module | undefined): string => {
+  if (!m) return "(ukjent modul)";
   if (m.navn.trim()) return m.navn.trim();
   const maal = m.nodes.find((n) => n.type === "maal");
   return maal?.tittel.trim() || "(uten navn)";
 };
 
-/** Fjerner referanser til moduler som ikke finnes, og rydder kanter i hver modul. */
+/** Fjerner referanser som ikke er lov (ukjent modul, seg selv, type som ikke kan peke), og rydder kanter. */
 export function tidyWorkspace(ws: Workspace): Workspace {
   const ids = new Set(ws.moduler.map((m) => m.id));
   let changed = false;
+  const badRef = (n: FlowNode, self: string) => n.ref !== undefined && (!canRef(n.type) || !ids.has(n.ref) || n.ref === self);
   const moduler = ws.moduler.map((m) => {
     const tidied = tidyEdges(asFlow(m));
     let nodes = m.nodes;
-    if (m.nodes.some((n) => n.ref && (!ids.has(n.ref) || n.ref === m.id))) {
-      nodes = m.nodes.map((n) => (n.ref && (!ids.has(n.ref) || n.ref === m.id) ? { ...n, ref: undefined } : n));
+    if (m.nodes.some((n) => badRef(n, m.id))) {
+      nodes = m.nodes.map((n) => (badRef(n, m.id) ? stripRef(n) : n));
       changed = true;
     }
     if (tidied.edges !== m.edges) changed = true;
@@ -108,6 +116,8 @@ export function placeModule(ws: Workspace): { x: number; y: number } {
   return { x: (i % 4) * OVERVIEW_OFFSET_X, y: Math.floor(i / 4) * OVERVIEW_OFFSET_Y };
 }
 
+export type Retning = "sender" | "mottar" | "begge" | "ukjent";
+
 export type Interface = {
   /** Modulen som eier boksen. */
   fra: string;
@@ -115,8 +125,7 @@ export type Interface = {
   til: string;
   /** Boksen i `fra` som peker. */
   node: FlowNode;
-  /** «sender» hvis piler går inn i boksen, «mottar» hvis piler går ut, «begge» eller «ukjent». */
-  retning: "sender" | "mottar" | "begge" | "ukjent";
+  retning: Retning;
 };
 
 /** Alle koblinger mellom moduler, avledet fra bokser med `ref`. */
@@ -128,7 +137,7 @@ export function interfaces(ws: Workspace): Interface[] {
       const inn = m.edges.some((e) => e.to === n.id);
       const ut = m.edges.some((e) => e.from === n.id);
       /* En start tar alltid imot, et resultat gir alltid fra seg. For et system avgjør pilene. */
-      const retning =
+      const retning: Retning =
         n.type === "start" ? "mottar" : n.type === "resultat" ? "sender" : inn && ut ? "begge" : inn ? "sender" : ut ? "mottar" : "ukjent";
       out.push({ fra: m.id, til: n.ref, node: n, retning });
     }

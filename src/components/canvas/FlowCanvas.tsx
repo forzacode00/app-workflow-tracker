@@ -32,7 +32,7 @@ const ARIA = {
   "controls.ariaLabel": "Zoom og utsnitt",
   "controls.zoomIn.ariaLabel": "Zoom inn",
   "controls.zoomOut.ariaLabel": "Zoom ut",
-  "controls.fitView.ariaLabel": "Vis hele flyten",
+  "controls.fitView.ariaLabel": "Vis hele modulen",
   "controls.interactive.ariaLabel": "Lås eller lås opp lerretet",
   "minimap.ariaLabel": "Oversiktskart",
   "handle.ariaLabel": "Koblingspunkt",
@@ -44,22 +44,24 @@ type Props = {
     "flow" | "generation" | "lastAdded" | "selectedId" | "addNode" | "moveNodes" | "removeNodes" | "removeEdges" | "connect" | "select"
   >;
   onRemoved: (count: number) => void;
+  /** Modulnavn per id, til «peker på»-teksten på boksen. */
+  moduleNames: Record<string, string>;
 };
 
-const toCards = (flow: Flow, selectedId: string | null, onGrow: CardNode["data"]["onGrow"]): CardNode[] =>
+const toCards = (flow: Flow, selectedId: string | null, onGrow: CardNode["data"]["onGrow"], names: Record<string, string>): CardNode[] =>
   flow.nodes.map((n) => ({
     id: n.id,
     type: "boks",
     position: { x: n.x, y: n.y },
     selected: n.id === selectedId,
-    data: { node: n, onGrow },
+    data: { node: n, refName: n.ref ? names[n.ref] : undefined, onGrow },
   }));
 
 /**
  * Lerretet. Kartet i hooken er sannheten for innhold og koblinger. React Flow eier posisjonene
  * mens en boks dras, og kartet får dem når draingen er ferdig.
  */
-export function FlowCanvas({ actions, onRemoved }: Props) {
+export function FlowCanvas({ actions, onRemoved, moduleNames }: Props) {
   const { flow, generation, lastAdded, selectedId, addNode, moveNodes, removeNodes, removeEdges, connect, select } = actions;
   const { fitView, setCenter, getViewport, screenToFlowPosition } = useReactFlow();
   const wrapper = useRef<HTMLDivElement>(null);
@@ -67,12 +69,12 @@ export function FlowCanvas({ actions, onRemoved }: Props) {
 
   const onGrow = useCallback((fromId: string, type: NodeType) => addNode(type, fromId), [addNode]);
 
-  const [cards, setCards] = useState<CardNode[]>(() => toCards(flow, selectedId, onGrow));
+  const [cards, setCards] = useState<CardNode[]>(() => toCards(flow, selectedId, onGrow, moduleNames));
   useEffect(() => {
-    if (!dragging.current) setCards(toCards(flow, selectedId, onGrow));
-  }, [flow, selectedId, onGrow]);
+    if (!dragging.current) setCards(toCards(flow, selectedId, onGrow, moduleNames));
+  }, [flow, selectedId, onGrow, moduleNames]);
 
-  /* Nytt kart (tøm, eksempel, import, angre): vis hele flyten. */
+  /* Ny modul (tøm, eksempel, import, angre): vis hele modulen. */
   useEffect(() => {
     if (generation > 0) void fitView({ padding: 0.25, maxZoom: 1, minZoom: 0.55, duration: 200 });
   }, [generation, fitView]);
@@ -87,7 +89,8 @@ export function FlowCanvas({ actions, onRemoved }: Props) {
     const left = (node.x + x) * zoom;
     const top = (node.y + y) * zoom;
     const inside = left >= 0 && top >= 0 && left + NODE_W * zoom <= w && top + NODE_H * zoom <= h;
-    if (!inside) void setCenter(node.x + NODE_W / 2, node.y + NODE_H / 2, { zoom, duration: 250 });
+    /* På smale skjermer dekker panelet mye; sentrer alltid så den nye boksen er synlig. */
+    if (!inside || w < 640) void setCenter(node.x + NODE_W / 2, node.y + NODE_H / 2, { zoom, duration: 250 });
   }, [lastAdded, flow.nodes, getViewport, setCenter]);
 
   const edges = useMemo<Edge[]>(
@@ -171,7 +174,7 @@ export function FlowCanvas({ actions, onRemoved }: Props) {
         ariaLabelConfig={ARIA}
         proOptions={{ hideAttribution: true }}
         className="bg-background"
-        aria-label="Lerret med flyten. Dra bokser, trekk piler mellom dem."
+        aria-label="Lerret med modulen. Dra bokser, trekk piler mellom dem."
       >
         <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} className="!bg-background" color="var(--border)" />
         <Controls showInteractive={false} position="top-right" className="!m-3 !shadow-none" />

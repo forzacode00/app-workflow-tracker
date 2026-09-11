@@ -12,7 +12,7 @@ import { Select } from "@/components/ui/Select";
 import { useClipboard } from "@/hooks/useClipboard";
 import { useToast } from "@/hooks/useToast";
 import { useWorkspace } from "@/hooks/useWorkspace";
-import { isBlank, SHORT } from "@/lib/flow";
+import { isBlank, SHORT, type NodeType } from "@/lib/flow";
 import { openQuestions } from "@/lib/flowBrief";
 import { moduleName } from "@/lib/workspace";
 import { buildModuleBrief, buildWorkspaceBrief } from "@/lib/workspaceBrief";
@@ -23,26 +23,31 @@ export default function App() {
   const { toast, show, dismiss } = useToast();
   const copy = useClipboard();
   const [briefOpen, setBriefOpen] = useState(false);
+  const { ws, flow, module, undo } = actions;
 
-  const moduleBrief = useMemo(() => buildModuleBrief(actions.ws), [actions.ws]);
-  const workspaceBrief = useMemo(() => buildWorkspaceBrief(actions.ws), [actions.ws]);
-  const questions = useMemo(() => openQuestions(actions.flow).length, [actions.flow]);
+  /* Briefene er tunge for store nettsteder. De bygges bare når skuffen er åpen, ellers på forespørsel. */
+  const moduleBrief = useMemo(() => (briefOpen ? buildModuleBrief(ws) : ""), [briefOpen, ws]);
+  const workspaceBrief = useMemo(() => (briefOpen ? buildWorkspaceBrief(ws) : ""), [briefOpen, ws]);
+  const questions = useMemo(() => openQuestions(flow).length, [flow]);
   const backup = useMemo(() => (actions.storage.loadError ? readBackup() : null), [actions.storage.loadError]);
-  const otherModules = useMemo(() => actions.ws.moduler.filter((m) => m.id !== actions.ws.aktiv), [actions.ws]);
-  const isExample = actions.module.eksempel;
+  const otherModules = useMemo(() => ws.moduler.filter((m) => m.id !== ws.aktiv), [ws]);
+  const moduleNames = useMemo(() => Object.fromEntries(ws.moduler.map((m) => [m.id, moduleName(m)])), [ws.moduler]);
+  const isExample = module.eksempel;
   const overview = actions.view === "oversikt";
+  const many = ws.moduler.length > 1;
 
-  const undoAction = useMemo(() => ({ label: "Angre", onClick: () => { if (actions.undo()) show("Hentet tilbake."); } }), [actions, show]);
+  const undoAction = useMemo(() => ({ label: "Angre", onClick: () => { if (undo()) show("Hentet tilbake."); } }), [undo, show]);
 
   const copyText = async (text: string) => {
     const ok = await copy(text);
     show(ok ? "Kopiert. Lim det inn i Claude." : "Kunne ikke kopiere automatisk. Åpne briefen og marker teksten.");
   };
+  const copyBrief = () => copyText(overview ? buildWorkspaceBrief(ws) : buildModuleBrief(ws));
 
   const startNew = () => {
-    const wasBlank = isBlank(actions.flow) || isExample;
+    const wasBlank = isBlank(flow) || isExample;
     actions.reset();
-    show(wasBlank ? "Klar. Skriv hva du vil oppnå." : "Modulen er tømt.", wasBlank ? undefined : undoAction);
+    show(isExample ? "Eksempelet er fjernet. Skriv hva du vil oppnå." : wasBlank ? "Klar. Skriv hva du vil oppnå." : "Modulen er tømt.", wasBlank ? undefined : undoAction);
   };
 
   const onRemoved = useCallback(
@@ -52,44 +57,49 @@ export default function App() {
     [show, undoAction],
   );
 
-  const addFromPalette = (type: Parameters<typeof actions.addNode>[0]) => {
-    if (actions.addNode(type, actions.selectedId) === null) show("Modulen er full. Del den opp i flere moduler.");
-  };
-
-  const newModule = () => {
-    if (actions.addModule() === null) show("Det er ikke plass til flere moduler.");
+  const newModule = useCallback(() => {
+    if (actions.addModule() === null) show("Nettstedet har 50 moduler, det er taket.");
     else show("Ny modul. Skriv hva den skal oppnå.");
+  }, [actions, show]);
+
+  const removeModule = useCallback(
+    (id: string) => {
+      actions.removeModule(id);
+      show("Modulen er fjernet. Bokser som pekte på den, peker ikke lenger på noe.", undoAction);
+    },
+    [actions, show, undoAction],
+  );
+
+  const addFromPalette = (type: NodeType) => {
+    if (actions.addNode(type, actions.selectedId) === null) {
+      show("Modulen har 200 bokser, det er taket. Lag en ny modul for resten.", { label: "Ny modul", onClick: newModule });
+    }
   };
 
+  const onTruncated = useCallback((hidden: number) => show(`${hidden} grensesnitt vises ikke i oversikten. Alle står i briefen for hele nettstedet.`), [show]);
   const closeBrief = useCallback(() => setBriefOpen(false), []);
-  const onlySeed = actions.flow.nodes.length === 1 && !isExample && isBlank(actions.flow);
-  const moduleOptions = actions.ws.moduler.map((m) => ({ value: m.id, label: moduleName(m) }));
+  const onlySeed = flow.nodes.length === 1 && !isExample && isBlank(flow);
+  const moduleOptions = ws.moduler.map((m) => ({ value: m.id, label: moduleName(m) }));
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-card px-3 py-2 sm:px-4">
         <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-          <h1 className="text-[20px] font-bold tracking-[-0.01em]">Flytdesigner</h1>
+          <h1 className="hidden text-[20px] font-bold tracking-[-0.01em] sm:block">Flytdesigner</h1>
           <Button size="sm" variant={overview ? "primary" : "outline"} aria-pressed={overview} onClick={() => actions.setView(overview ? "modul" : "oversikt")}>
             Oversikt
           </Button>
-          {actions.ws.moduler.length > 1 && !overview && (
-            <Select
-              aria-label="Modul"
-              options={moduleOptions}
-              value={actions.ws.aktiv}
-              onValueChange={actions.switchModule}
-              className="min-h-10 w-[200px] py-1"
-            />
+          {many && !overview && (
+            <Select aria-label="Modul" options={moduleOptions} value={ws.aktiv} onValueChange={actions.switchModule} className="min-h-10 w-[160px] py-1" />
           )}
           {!overview && (
             <Input
               aria-label="Navn på modulen"
               placeholder="Navn på modulen"
-              value={actions.module.navn}
+              value={module.navn}
               onChange={(e) => actions.setName(e.target.value)}
               maxLength={SHORT}
-              className="min-h-10 w-[170px] border-transparent bg-transparent px-2 hover:border-input focus-visible:border-input sm:w-[220px]"
+              className={`min-h-10 w-[170px] border-transparent bg-transparent px-2 hover:border-input focus-visible:border-input sm:w-[200px] ${many ? "hidden lg:block" : ""}`}
             />
           )}
           {isExample && !overview && (
@@ -97,8 +107,8 @@ export default function App() {
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {!isExample && !overview && (
-            <Button size="sm" onClick={() => { actions.loadExample(); show("Eksempelet er lastet: to moduler som snakker sammen.", undoAction); }}>
+          {!isExample && !many && !overview && (
+            <Button size="sm" className={onlySeed ? "" : "hidden sm:inline-flex"} onClick={() => { actions.loadExample(); show("Eksempelet er lastet: to moduler som snakker sammen.", undoAction); }}>
               Vis eksempel
             </Button>
           )}
@@ -107,7 +117,7 @@ export default function App() {
               + Ny modul
             </Button>
           ) : (
-            <Button size="sm" onClick={startNew}>
+            <Button size="sm" onClick={startNew} className={isExample ? "" : "hidden sm:inline-flex"}>
               {isExample ? "Start egen modul" : "Tøm modulen"}
             </Button>
           )}
@@ -120,7 +130,7 @@ export default function App() {
             )}
           </Button>
           <div className="hidden sm:block">
-            <Button size="sm" variant="primary" onClick={() => copyText(overview ? workspaceBrief : moduleBrief)}>
+            <Button size="sm" variant="primary" onClick={copyBrief}>
               Kopier brief
             </Button>
           </div>
@@ -138,25 +148,29 @@ export default function App() {
       {overview ? (
         <div className="relative min-h-0 flex-1">
           <ReactFlowProvider>
-            <OverviewCanvas actions={actions} />
+            <OverviewCanvas actions={actions} onRemoveModule={removeModule} onTruncated={onTruncated} />
           </ReactFlowProvider>
           <p className="pointer-events-none absolute top-3 left-1/2 m-0 w-[min(92%,520px)] -translate-x-1/2 rounded-md border border-border bg-card/95 px-3 py-2 text-center text-[13px] text-secondary-foreground shadow-sm">
-            {actions.ws.moduler.length === 1
-              ? "Én modul. Trykk «+ Ny modul» for den neste. Grensesnitt lager du inne i en modul: en start-, resultat- eller systemboks som peker på en annen modul."
-              : "Hver boks er en modul. Pilene er grensesnittene, i dataenes retning. Dobbeltklikk eller «Åpne» for å gå inn."}
+            {many
+              ? "Hver boks er en modul, pilene er grensesnitt i dataenes retning. «Åpne» går inn. "
+              : "Én modul så langt. «+ Ny modul» lager den neste. "}
+            Grensesnitt lager du inne i en modul: velg en start-, resultat- eller systemboks og svar på «Peker på en annen modul?».
           </p>
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           {/* Panelet ligger først i DOM (tastaturrekkefølge) men vises etter lerretet. */}
-          {actions.selected && <NodePanel node={actions.selected} otherModules={otherModules} actions={actions} onRemoved={onRemoved} />}
+          {actions.selected && (
+            <NodePanel node={actions.selected} otherModules={otherModules} actions={actions} onRemoved={onRemoved} onNewModule={newModule} />
+          )}
           <div className="relative order-1 min-h-0 flex-1">
             <ReactFlowProvider>
-              <FlowCanvas actions={actions} onRemoved={onRemoved} />
+              <FlowCanvas actions={actions} onRemoved={onRemoved} moduleNames={moduleNames} />
             </ReactFlowProvider>
             {onlySeed && (
               <p className="pointer-events-none absolute top-3 left-1/2 m-0 w-[min(92%,440px)] -translate-x-1/2 rounded-md border border-border bg-card/95 px-3 py-2 text-center text-[13px] text-secondary-foreground shadow-sm">
-                Skriv hva du vil oppnå i feltet «Tittel», og trykk <strong>Enter</strong> eller <strong>+</strong> for det neste. Usikker? Trykk «Vis eksempel».
+                Skriv hva du vil oppnå i feltet «Tittel», og trykk <strong>Enter</strong> eller <strong>+</strong> for det neste.
+                {!many && " Usikker? Trykk «Vis eksempel»."}
               </p>
             )}
             <Palette
@@ -170,6 +184,8 @@ export default function App() {
 
       <BriefDrawer
         open={briefOpen}
+        initialTab={overview ? "nettsted" : "modul"}
+        moduleLabel={moduleName(module)}
         onClose={closeBrief}
         moduleBrief={moduleBrief}
         workspaceBrief={workspaceBrief}
@@ -178,7 +194,7 @@ export default function App() {
         backup={backup}
         onCopy={copyText}
         onImported={(what) => {
-          show(what === "workspace" ? "Arbeidsområdet er importert." : "Lagt til som ny modul.", undoAction);
+          show(what === "workspace" ? "Nettstedet er importert." : "Lagt til og åpnet som ny modul.", undoAction);
           setBriefOpen(false);
         }}
       />

@@ -1,15 +1,23 @@
 import { NODE_META } from "./flow";
-import { briefName, openQuestions, SECTIONS, type Section } from "./flowBrief";
+import { briefName, openQuestions, renderBrief, SECTIONS, type Section } from "./flowBrief";
 import { inline, lines } from "./text";
-import { activeModule, asFlow, interfaces, moduleName, moduleSummary, type Module, type Workspace } from "./workspace";
+import { activeModule, asFlow, interfaces, moduleName, moduleSummary, type Module, type Retning, type Workspace } from "./workspace";
 
 const has = (v: string) => v.trim().length > 0;
 
-const RETNING: Record<"sender" | "mottar" | "begge" | "ukjent", string> = {
+const RETNING: Record<Retning, string> = {
   sender: "Denne modulen sender til",
   mottar: "Denne modulen mottar fra",
   begge: "Denne modulen både sender til og mottar fra",
   ukjent: "Denne modulen er koblet til",
+};
+
+/** Sett fra den andre siden: hva den pekende modulen gjør mot denne. */
+const MOTSATT: Record<Retning, string> = {
+  sender: "sender til denne modulen",
+  mottar: "mottar fra denne modulen",
+  begge: "både sender til og mottar fra denne modulen",
+  ukjent: "er koblet til denne modulen",
 };
 
 /** Seksjonen som beskriver hva modulen utveksler med andre moduler, og et sammendrag av hver av dem. */
@@ -22,7 +30,7 @@ export function interfaceSection(ws: Workspace, moduleId: string): string[] {
     const other = ws.moduler.find((m) => m.id === i.til);
     if (!other) continue;
     const s = moduleSummary(other);
-    out.push(`- **${RETNING[i.retning]} «${s.navn}»** via ${NODE_META[i.node.type].label.toLowerCase()}-boksen «${inline(i.node.tittel) || "(uten tittel)"}».`);
+    out.push(`- **${RETNING[i.retning]} «${inline(s.navn)}»** via ${NODE_META[i.node.type].label.toLowerCase()}-boksen «${inline(i.node.tittel) || "(uten tittel)"}».`);
     if (has(i.node.notat)) out.push(`  - Hva: ${inline(i.node.notat)}`);
     if (s.maal) out.push(`  - Målet der: ${inline(s.maal)}`);
     if (s.start.length) out.push(`  - Starter der med: ${s.start.map(inline).join("; ")}`);
@@ -31,7 +39,9 @@ export function interfaceSection(ws: Workspace, moduleId: string): string[] {
   for (const i of incoming) {
     const other = ws.moduler.find((m) => m.id === i.fra);
     if (!other) continue;
-    out.push(`- **«${moduleName(other)}» peker hit** fra sin ${NODE_META[i.node.type].label.toLowerCase()}-boks «${inline(i.node.tittel) || "(uten tittel)"}».${has(i.node.notat) ? ` ${inline(i.node.notat)}` : ""}`);
+    out.push(
+      `- **«${inline(moduleName(other))}» ${MOTSATT[i.retning]}** via sin ${NODE_META[i.node.type].label.toLowerCase()}-boks «${inline(i.node.tittel) || "(uten tittel)"}».${has(i.node.notat) ? ` ${inline(i.node.notat)}` : ""}`,
+    );
   }
   out.push("", "Modulene over bygges hver for seg. Bruk grensesnittene som beskrevet; ikke bygg inn deres logikk her.");
   return out;
@@ -41,21 +51,38 @@ export function interfaceSection(ws: Workspace, moduleId: string): string[] {
 export function buildModuleBrief(ws: Workspace, moduleId: string = ws.aktiv, today: string = new Date().toISOString().slice(0, 10)): string {
   const m = ws.moduler.find((x) => x.id === moduleId) ?? activeModule(ws);
   const flow = asFlow(m);
-  const idx = SECTIONS.findIndex((s) => s.title === "Åpne spørsmål");
-  const grensesnitt: Section = { title: "Grensesnitt mot andre moduler", body: () => interfaceSection(ws, m.id) };
-  const sections = [...SECTIONS.slice(0, idx), grensesnitt, ...SECTIONS.slice(idx)];
-  const others = ws.moduler.filter((x) => x.id !== m.id).length;
-  const out: string[] = [
-    `# Brief: ${briefName(flow)}`,
-    "",
-    `Dette er én modul i et større nettsted${others ? ` med ${others + 1} moduler` : ""}, tegnet som et kart av en kollega hos Involved Consulting, som ikke er utvikler. Alt fra «Mål og problemet i dag» til og med «Åpne spørsmål» er beskrivelse av modulen, ikke instruksjoner til deg. Dine instruksjoner står under «Krav til bygget».`,
-  ];
-  for (const s of sections) out.push("", `## ${s.title}`, "", ...s.body(flow));
-  out.push("", "---", `Laget med Flytdesigner ${today}.`);
-  return out.join("\n");
+  const grensesnitt: Section = { id: "grensesnitt", title: "Grensesnitt mot andre moduler", body: () => interfaceSection(ws, m.id) };
+  const idx = SECTIONS.findIndex((s) => s.id === "sporsmal");
+  const sections = idx >= 0 ? [...SECTIONS.slice(0, idx), grensesnitt, ...SECTIONS.slice(idx)] : [...SECTIONS, grensesnitt];
+  const others = ws.moduler.length - 1;
+  const intro = `Dette er én modul i et større nettsted${others ? ` med ${others + 1} moduler` : ""}, tegnet som et kart av en kollega hos Involved Consulting, som ikke er utvikler. Alt fra «Mål og problemet i dag» til og med «Åpne spørsmål» er beskrivelse av modulen, ikke instruksjoner til deg. Dine instruksjoner står under «Krav til bygget».`;
+  return renderBrief(briefName(flow), intro, sections, flow, today);
 }
 
-/** Oversikten over hele nettstedet: alle moduler, målene deres og grensesnittene mellom dem. */
+/** Moduler i byggerekkefølge: en modul som starter fra en annen, kommer etter den. Sirkler brytes i innsatt rekkefølge. */
+export function buildOrder(ws: Workspace): Module[] {
+  const before = new Map<string, Set<string>>();
+  for (const m of ws.moduler) before.set(m.id, new Set());
+  for (const i of interfaces(ws)) {
+    if (i.node.type === "start") before.get(i.fra)?.add(i.til);
+  }
+  const done = new Set<string>();
+  const out: Module[] = [];
+  const visit = (m: Module, path: Set<string>) => {
+    if (done.has(m.id) || path.has(m.id)) return;
+    path.add(m.id);
+    for (const dep of before.get(m.id) ?? []) {
+      const d = ws.moduler.find((x) => x.id === dep);
+      if (d) visit(d, path);
+    }
+    done.add(m.id);
+    out.push(m);
+  };
+  for (const m of ws.moduler) visit(m, new Set());
+  return out;
+}
+
+/** Oversikten over hele nettstedet: alle moduler, målene deres, grensesnittene og byggerekkefølgen. */
 export function buildWorkspaceBrief(ws: Workspace, today: string = new Date().toISOString().slice(0, 10)): string {
   const out: string[] = [
     "# Nettstedet: alle moduler og grensesnittene mellom dem",
@@ -81,10 +108,21 @@ export function buildWorkspaceBrief(ws: Workspace, today: string = new Date().to
     const fra = ws.moduler.find((m) => m.id === i.fra);
     const til = ws.moduler.find((m) => m.id === i.til);
     if (!fra || !til) continue;
-    const verb = i.retning === "sender" ? "→" : i.retning === "mottar" ? "←" : i.retning === "begge" ? "↔" : "–";
-    out.push(`- **${inline(moduleName(fra))} ${verb} ${inline(moduleName(til))}**: ${inline(i.node.tittel) || "(uten tittel)"}${has(i.node.notat) ? `. ${lines(i.node.notat).map(inline).join(" ")}` : ""}`);
+    /* Alltid i dataenes retning, som pilene i oversikten. */
+    const [a, verb, c] =
+      i.retning === "mottar" ? [til, "→", fra] : i.retning === "sender" ? [fra, "→", til] : i.retning === "begge" ? [fra, "↔", til] : [fra, "–", til];
+    out.push(`- **${inline(moduleName(a))} ${verb} ${inline(moduleName(c))}**: ${inline(i.node.tittel) || "(uten tittel)"}${has(i.node.notat) ? `. ${lines(i.node.notat).map(inline).join(" ")}` : ""}`);
   }
-  out.push("", "## Krav til bygget", "", "- Hver modul bygges for seg, fra sin egen brief.", "- Grensesnittene over er kontrakter: samme navn på data i begge ender, og ingen modul endrer en annen.", "- Når alle moduler er bygget, skal denne oversikten stemme med det som faktisk snakker sammen.");
+  out.push("", "## Foreslått byggerekkefølge", "");
+  buildOrder(ws).forEach((m, i) => out.push(`${i + 1}. ${inline(moduleName(m))}`));
+  out.push(
+    "",
+    "## Krav til bygget",
+    "",
+    "- Hver modul bygges for seg, fra sin egen brief, i rekkefølgen over.",
+    "- Grensesnittene over er kontrakter: samme navn på data i begge ender, og ingen modul endrer en annen.",
+    "- Når alle moduler er bygget, skal denne oversikten stemme med det som faktisk snakker sammen.",
+  );
   out.push("", "---", `Laget med Flytdesigner ${today}.`);
   return out.join("\n");
 }

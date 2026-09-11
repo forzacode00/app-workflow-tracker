@@ -6,6 +6,7 @@ import {
   placeNear,
   seedNode,
   type Flow,
+  type FlowEdge,
   type FlowNode,
   type NodeType,
   type Position,
@@ -31,27 +32,46 @@ export type StorageState = { saveFailed: boolean; loadError: string | null };
 export const SAVE_DELAY_MS = 250;
 
 /** Bokser som henger på et steg. Legger man til noe fra en slik boks, festes det nye på steget den henger på. */
-const LEAF: readonly NodeType[] = ["regel", "sporsmal", "resultat", "system", "person", "data"];
+const LEAF: readonly NodeType[] = ["regel", "sporsmal", "resultat", "system", "data"];
 const ANCHOR: readonly NodeType[] = ["steg", "start", "maal"];
 
-/** Steget en bladboks henger på, hvis noe. */
-function anchorOf(flow: Flow, node: FlowNode): FlowNode | undefined {
+/** Steget en bladboks henger på: den som peker inn i boksen, ellers den boksen peker på. */
+export function anchorOf(flow: Flow, node: FlowNode): FlowNode | undefined {
   if (!LEAF.includes(node.type)) return undefined;
-  const ids = flow.edges.filter((e) => e.to === node.id || e.from === node.id).map((e) => (e.to === node.id ? e.from : e.to));
-  return flow.nodes.find((n) => ids.includes(n.id) && ANCHOR.includes(n.type));
+  const find = (ids: string[]) => flow.nodes.find((n) => ids.includes(n.id) && ANCHOR.includes(n.type));
+  return find(flow.edges.filter((e) => e.to === node.id).map((e) => e.from)) ?? find(flow.edges.filter((e) => e.from === node.id).map((e) => e.to));
 }
 
-/** Sy kjeden sammen: alle som pekte inn i en fjernet boks, pekes videre til det den pekte på. */
-function stitch(m: Module, gone: Set<string>): Module["edges"] {
-  const kept = m.edges.filter((e) => !gone.has(e.from) && !gone.has(e.to));
-  const extra: Module["edges"] = [];
+/**
+ * Sy kjeden sammen når bokser fjernes: alle som pekte inn i noe fjernet, pekes videre til
+ * første beholdte boks bak det, også gjennom flere fjernede bokser. Holder seg under MAX_EDGES.
+ */
+export function stitch(edges: FlowEdge[], gone: Set<string>): FlowEdge[] {
+  const kept = edges.filter((e) => !gone.has(e.from) && !gone.has(e.to));
+  const exits = (id: string, seen = new Set<string>()): string[] => {
+    if (seen.has(id)) return [];
+    seen.add(id);
+    return edges.filter((e) => e.from === id).flatMap((e) => (gone.has(e.to) ? exits(e.to, seen) : [e.to]));
+  };
+  const extra: FlowEdge[] = [];
+  const have = new Set(kept.map((e) => `${e.from}>${e.to}`));
   for (const id of gone) {
-    const ins = m.edges.filter((e) => e.to === id && !gone.has(e.from)).map((e) => e.from);
-    const outs = m.edges.filter((e) => e.from === id && !gone.has(e.to)).map((e) => e.to);
-    for (const a of ins) for (const b of outs) if (a !== b && !kept.some((e) => e.from === a && e.to === b)) extra.push({ id: newId("e"), from: a, to: b });
+    const ins = edges.filter((e) => e.to === id && !gone.has(e.from)).map((e) => e.from);
+    if (!ins.length) continue;
+    const outs = exits(id);
+    for (const a of ins) {
+      for (const b of outs) {
+        const key = `${a}>${b}`;
+        if (a === b || have.has(key)) continue;
+        have.add(key);
+        extra.push({ id: newId("e"), from: a, to: b });
+      }
+    }
   }
-  return [...kept, ...extra];
+  return [...kept, ...extra].slice(0, MAX_EDGES);
 }
+
+type EditOptions = { undoable?: boolean };
 
 export function useWorkspace() {
   const [loaded] = useState<LoadResult>(() => loadWorkspace());
@@ -92,28 +112,41 @@ export function useWorkspace() {
   const module = useMemo(() => activeModule(ws), [ws]);
   const flow = useMemo(() => asFlow(module), [module]);
 
-  /** Endrer hele arbeidsområdet. */
-  const editWs = useCallback((fn: (w: Workspace) => Workspace) => {
+  /**
+   * Endrer hele nettstedet. Med `undoable` tas kopi av tilstanden rett før endringen,
+   * inne i oppdateringen, så den alltid er den faktiske forrige tilstanden.
+   */
+  const editWs = useCallback((fn: (w: Workspace) => Workspace, opts: EditOptions = {}) => {
     dirty.current = true;
-    setWs((w) => tidyWorkspace(fn(w)));
+    setWs((w) => {
+      const next = tidyWorkspace(fn(w));
+      if (opts.undoable && next !== w) previous.current = w;
+      return next;
+    });
   }, []);
 
   /** Innholdsendring i den aktive modulen. Nullstiller eksempel-flagget på modulen. */
   const edit = useCallback(
-    (fn: (m: Module) => Module) =>
-      editWs((w) => ({ ...w, moduler: w.moduler.map((m) => (m.id === w.aktiv ? { ...fn(m), eksempel: false } : m)) })),
+    (fn: (m: Module) => Module, opts: EditOptions = {}) =>
+      editWs((w) => {
+        const cur = activeModule(w);
+        const next = fn(cur);
+        if (next === cur) return w;
+        return { ...w, moduler: w.moduler.map((m) => (m.id === cur.id ? { ...next, eksempel: false } : m)) };
+      }, opts),
     [editWs],
   );
 
   /** Endring som lagres uten å gjøre eksempelet til «dine data» (flytting). */
   const commit = useCallback(
-    (fn: (m: Module) => Module) => editWs((w) => ({ ...w, moduler: w.moduler.map((m) => (m.id === w.aktiv ? fn(m) : m)) })),
+    (fn: (m: Module) => Module) =>
+      editWs((w) => {
+        const cur = activeModule(w);
+        const next = fn(cur);
+        return next === cur ? w : { ...w, moduler: w.moduler.map((m) => (m.id === cur.id ? next : m)) };
+      }),
     [editWs],
   );
-
-  const snapshot = useCallback(() => {
-    previous.current = latest.current;
-  }, []);
 
   const setName = useCallback((navn: string) => edit((m) => ({ ...m, navn })), [edit]);
 
@@ -137,12 +170,13 @@ export function useWorkspace() {
     [commit],
   );
 
+  /** Legger til en boks. Returnerer id-en, eller null hvis modulen er full. */
   const addNode = useCallback(
     (type: NodeType, fromId?: string | null, position?: Position): string | null => {
-      const current = activeModule(latest.current);
-      if (current.nodes.length >= MAX_NODES) return null;
+      if (activeModule(latest.current).nodes.length >= MAX_NODES) return null;
       const id = newId();
       edit((m) => {
+        if (m.nodes.length >= MAX_NODES) return m;
         const f = asFlow(m);
         let from = fromId ? m.nodes.find((n) => n.id === fromId) : undefined;
         /* Fra en regel eller et resultat: fest det nye på steget de henger på, så kjeden ikke går via bladet. */
@@ -159,27 +193,28 @@ export function useWorkspace() {
     [edit],
   );
 
+  /** Fjerner bokser og syr kjeden sammen. Kan angres. Blir modulen tom, settes en ny målboks inn. */
   const removeNodes = useCallback(
     (ids: string[]): number => {
       const gone = new Set(ids);
       const count = activeModule(latest.current).nodes.filter((n) => gone.has(n.id)).length;
       if (count === 0) return 0;
-      snapshot();
-      edit((m) => {
-        const nodes = m.nodes.filter((n) => !gone.has(n.id));
-        return { ...m, nodes: nodes.length ? nodes : [seedNode()], edges: stitch(m, gone) };
-      });
+      edit(
+        (m) => {
+          const nodes = m.nodes.filter((n) => !gone.has(n.id));
+          if (nodes.length === m.nodes.length) return m;
+          return { ...m, nodes: nodes.length ? nodes : [seedNode()], edges: stitch(m.edges, gone) };
+        },
+        { undoable: true },
+      );
       setSelectedId((s) => (s && gone.has(s) ? null : s));
       return count;
     },
-    [edit, snapshot],
+    [edit],
   );
 
   const connect = useCallback(
-    (from: string, to: string) => {
-      if (activeModule(latest.current).edges.length >= MAX_EDGES) return;
-      edit((m) => ({ ...m, edges: [...m.edges, { id: newId("e"), from, to }] }));
-    },
+    (from: string, to: string) => edit((m) => (m.edges.length >= MAX_EDGES ? m : { ...m, edges: [...m.edges, { id: newId("e"), from, to }] })),
     [edit],
   );
 
@@ -188,11 +223,10 @@ export function useWorkspace() {
       const gone = new Set(ids);
       const count = activeModule(latest.current).edges.filter((e) => gone.has(e.id)).length;
       if (count === 0) return 0;
-      snapshot();
-      edit((m) => ({ ...m, edges: m.edges.filter((e) => !gone.has(e.id)) }));
+      edit((m) => (m.edges.some((e) => gone.has(e.id)) ? { ...m, edges: m.edges.filter((e) => !gone.has(e.id)) } : m), { undoable: true });
       return count;
     },
-    [edit, snapshot],
+    [edit],
   );
 
   /* Moduler */
@@ -212,7 +246,7 @@ export function useWorkspace() {
     (navn = ""): string | null => {
       if (latest.current.moduler.length >= MAX_MODULES) return null;
       const id = newModuleId();
-      editWs((w) => ({ ...w, moduler: [...w.moduler, { ...seedModule(id, navn), ...placeModule(w) }], aktiv: id }));
+      editWs((w) => (w.moduler.length >= MAX_MODULES ? w : { ...w, moduler: [...w.moduler, { ...seedModule(id, navn), ...placeModule(w) }], aktiv: id }));
       setSelectedId("maal");
       setView("modul");
       setGeneration((g) => g + 1);
@@ -221,33 +255,42 @@ export function useWorkspace() {
     [editWs],
   );
 
-  /** Legger til en ferdig modul (import). */
+  /** Legger til en ferdig modul (import). Kolliderer id-en, får den ny. Kan angres. */
   const insertModule = useCallback(
-    (m: Module) => {
+    (m: Module): boolean => {
       if (latest.current.moduler.length >= MAX_MODULES) return false;
-      snapshot();
-      editWs((w) => ({ ...w, moduler: [...w.moduler, { ...m, ...placeModule(w), eksempel: false }], aktiv: m.id }));
+      editWs(
+        (w) => {
+          if (w.moduler.length >= MAX_MODULES) return w;
+          const id = w.moduler.some((x) => x.id === m.id) ? newModuleId() : m.id;
+          return { ...w, moduler: [...w.moduler, { ...m, id, ...placeModule(w), eksempel: false }], aktiv: id };
+        },
+        { undoable: true },
+      );
       setSelectedId(null);
       setView("modul");
       setGeneration((g) => g + 1);
       return true;
     },
-    [editWs, snapshot],
+    [editWs],
   );
 
-  /** Fjerner en modul. Siste modul kan ikke fjernes, den tømmes i stedet. Kan angres. */
+  /** Fjerner en modul. Siste modul kan ikke fjernes, nettstedet tømmes i stedet. Kan angres. */
   const removeModule = useCallback(
     (id: string) => {
-      snapshot();
-      editWs((w) => {
-        const rest = w.moduler.filter((m) => m.id !== id);
-        if (rest.length === 0) return seedWorkspace();
-        return { ...w, moduler: rest, aktiv: w.aktiv === id ? rest[0]!.id : w.aktiv };
-      });
+      editWs(
+        (w) => {
+          const rest = w.moduler.filter((m) => m.id !== id);
+          if (rest.length === w.moduler.length) return w;
+          if (rest.length === 0) return seedWorkspace();
+          return { ...w, moduler: rest, aktiv: w.aktiv === id ? rest[0]!.id : w.aktiv };
+        },
+        { undoable: true },
+      );
       setSelectedId(null);
       setGeneration((g) => g + 1);
     },
-    [editWs, snapshot],
+    [editWs],
   );
 
   const moveModules = useCallback(
@@ -256,27 +299,32 @@ export function useWorkspace() {
     [editWs],
   );
 
-  /* Hele arbeidsområdet */
+  /* Hele nettstedet */
 
-  const replace = useCallback((next: Workspace) => {
-    dirty.current = true;
-    setWs((w) => {
-      previous.current = w;
-      return tidyWorkspace(next);
-    });
-    setSelectedId(null);
-    setView("modul");
-    setGeneration((g) => g + 1);
-  }, []);
+  /** Erstatter hele nettstedet (import, eksempel). Kan angres. */
+  const replace = useCallback(
+    (next: Workspace) => {
+      editWs(() => next, { undoable: true });
+      setSelectedId(null);
+      setView("modul");
+      setGeneration((g) => g + 1);
+    },
+    [editWs],
+  );
 
-  /** Tømmer den aktive modulen. Kan angres. */
+  /** Tømmer den aktive modulen. Er hele nettstedet et eksempel, tømmes alt. Kan angres. */
   const reset = useCallback(() => {
-    snapshot();
-    editWs((w) => ({ ...w, moduler: w.moduler.map((m) => (m.id === w.aktiv ? { ...seedModule(m.id, ""), x: m.x, y: m.y } : m)) }));
+    editWs(
+      (w) =>
+        w.moduler.every((m) => m.eksempel)
+          ? seedWorkspace()
+          : { ...w, moduler: w.moduler.map((m) => (m.id === w.aktiv ? { ...seedModule(m.id, ""), x: m.x, y: m.y } : m)) },
+      { undoable: true },
+    );
     setSelectedId("maal");
     setView("modul");
     setGeneration((g) => g + 1);
-  }, [editWs, snapshot]);
+  }, [editWs]);
 
   const loadExample = useCallback(() => replace(exampleWorkspace()), [replace]);
 

@@ -1,10 +1,12 @@
+import { validateFlow } from "./flowStorage";
 import { migrateV1 } from "./migrateV1";
 import { loadWorkflow as loadV1, STORAGE_KEY as V1_KEY, type StorageLike } from "./v1/storage";
-import { STORAGE_KEY as V2_KEY, validateFlow } from "./flowStorage";
 import { newModuleId, tidyWorkspace, workspaceFromFlow, workspaceSchema, type Module, type Workspace } from "./workspace";
 
 export const STORAGE_KEY = "flytdesigner:v3";
 export const BACKUP_KEY = "flytdesigner:v3:backup";
+/** Nøkkelen det gamle kartet (v2) lå under. Leses bare for løfting. */
+export const V2_KEY = "flytdesigner:v2";
 export const MAX_JSON_LENGTH = 2_000_000;
 
 export type ParseResult =
@@ -18,12 +20,13 @@ function validateWorkspace(candidate: unknown): ParseResult {
   if (!result.success) {
     const first = result.error.issues[0];
     const where = first?.path.length ? first.path.join(".") : "ukjent felt";
-    return { ok: false, error: `«${where}» har en verdi Flytdesigner ikke kjenner. Be kollegaen eksportere på nytt.` };
+    const why = first?.code === "custom" ? first.message : "har en verdi Flytdesigner ikke kjenner";
+    return { ok: false, error: `«${where}»: ${why}. Be kollegaen eksportere på nytt.` };
   }
   return { ok: true, kind: "workspace", workspace: tidyWorkspace(result.data) };
 }
 
-/** Tolker JSON fra lagring eller import: arbeidsområde (v3), ett kart (v2) eller gammelt skjema (v1). */
+/** Tolker JSON fra lagring eller import: nettsted (v3), ett kart (v2) eller gammelt skjema (v1). */
 export function parseWorkspace(json: string): ParseResult {
   if (json.length > MAX_JSON_LENGTH) return { ok: false, error: "Teksten er for stor til å være fra Flytdesigner." };
   let raw: unknown;
@@ -38,12 +41,14 @@ export function parseWorkspace(json: string): ParseResult {
   const obj = raw as Record<string, unknown>;
   if (obj.versjon === 3) return validateWorkspace(obj);
   let flow;
-  if (obj.versjon !== 2 && Array.isArray(obj.steg)) {
+  if (obj.versjon === 2) {
+    flow = validateFlow(obj);
+  } else if (obj.versjon === undefined && Array.isArray(obj.steg)) {
     const v1 = loadV1({ getItem: () => json, setItem: () => undefined });
     if (v1.status !== "ok") return { ok: false, error: "Flyten fra det gamle skjemaet kunne ikke leses." };
     flow = validateFlow(migrateV1(v1.workflow));
   } else {
-    flow = validateFlow(obj);
+    return { ok: false, error: "JSON-en må være eksportert fra Flytdesigner." };
   }
   if (!flow.ok) return flow;
   const ws = workspaceFromFlow(flow.flow, newModuleId());
@@ -71,28 +76,36 @@ const read = (storage: StorageLike, key: string): string | null => {
   }
 };
 
-/** Leser v3. Mangler den, løftes v2 (ett kart) eller v1 (skjema) til ett arbeidsområde. Uleselig v3 kopieres til backup. */
+const backUp = (storage: StorageLike, raw: string) => {
+  try {
+    storage.setItem(BACKUP_KEY, raw);
+  } catch {
+    // Får vi ikke skrevet kopien, ligger originalen fortsatt under sin nøkkel til neste lagring.
+  }
+};
+
+/**
+ * Leser v3. Mangler den, løftes v2 (ett kart) eller v1 (skjema) til ett nettsted.
+ * Alt som ligger lagret men ikke kan leses, kopieres til BACKUP_KEY før noe annet skjer.
+ */
 export function loadWorkspace(storage: StorageLike | null = getStorage()): LoadResult {
   if (!storage) return { status: "empty" };
   const raw = read(storage, STORAGE_KEY);
   if (raw) {
     const parsed = parseWorkspace(raw);
     if (parsed.ok && parsed.kind === "workspace") return { status: "ok", workspace: parsed.workspace };
-    try {
-      storage.setItem(BACKUP_KEY, raw);
-    } catch {
-      // Beholder originalen under STORAGE_KEY til neste skriving.
-    }
-    return { status: "invalid", error: parsed.ok ? "Lagringen inneholdt ett kart, ikke et arbeidsområde." : parsed.error };
+    backUp(storage, raw);
+    return { status: "invalid", error: parsed.ok ? "Lagringen inneholdt ett kart, ikke et nettsted." : parsed.error };
   }
   for (const key of [V2_KEY, V1_KEY]) {
     const older = read(storage, key);
     if (!older) continue;
     const parsed = parseWorkspace(older);
     if (parsed.ok && parsed.kind === "module") {
-      return { status: "ok", workspace: { versjon: 3, moduler: [{ ...parsed.module, id: "m1" }], aktiv: "m1" } };
+      return { status: "ok", workspace: tidyWorkspace({ versjon: 3, moduler: [{ ...parsed.module, id: "m1" }], aktiv: "m1" }) };
     }
-    if (!parsed.ok) return { status: "invalid", error: parsed.error };
+    backUp(storage, older);
+    return { status: "invalid", error: parsed.ok ? "Eldre lagring hadde uventet form." : parsed.error };
   }
   return { status: "empty" };
 }
@@ -101,7 +114,7 @@ export function readBackup(storage: StorageLike | null = getStorage()): string |
   return storage ? read(storage, BACKUP_KEY) : null;
 }
 
-/** Lagrer v3. En vellykket lagring rydder eldre nøkler, så det ikke ligger flere kopier. */
+/** Lagrer v3. En vellykket lagring rydder eldre nøkler (de er enten løftet eller kopiert til backup). */
 export function saveWorkspace(ws: Workspace, storage: Store | null = getStorage()): boolean {
   if (!storage) return false;
   try {

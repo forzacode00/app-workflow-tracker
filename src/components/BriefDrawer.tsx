@@ -5,8 +5,8 @@ import type { FlowActions } from "@/hooks/useWorkspace";
 import { cn } from "@/lib/utils";
 import { parseWorkspace, serializeWorkspace } from "@/lib/workspaceStorage";
 
-type Tab = "modul" | "nettsted" | "json";
-const TABS: { id: Tab; label: string }[] = [
+export type BriefTab = "modul" | "nettsted" | "json";
+const TABS: { id: BriefTab; label: string }[] = [
   { id: "modul", label: "Denne modulen" },
   { id: "nettsted", label: "Hele nettstedet" },
   { id: "json", label: "Del som JSON" },
@@ -14,6 +14,9 @@ const TABS: { id: Tab; label: string }[] = [
 
 type Props = {
   open: boolean;
+  initialTab?: BriefTab;
+  /** Navnet på modulen «Denne modulen» gjelder. */
+  moduleLabel: string;
   onClose: () => void;
   moduleBrief: string;
   workspaceBrief: string;
@@ -32,10 +35,12 @@ function BriefLine({ line }: { line: string }) {
   return <>{line}</>;
 }
 
-function BriefView({ text, label }: { text: string; label: string }) {
+function BriefView({ text, label, id }: { text: string; label: string; id: string }) {
   const lines = text.split("\n");
   return (
     <pre
+      id={id}
+      role="tabpanel"
       tabIndex={0}
       aria-label={label}
       className="m-0 min-h-0 flex-1 overflow-auto rounded-md bg-code p-4 font-mono text-[12.5px] leading-[1.55] wrap-break-word whitespace-pre-wrap text-code-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
@@ -53,21 +58,29 @@ function BriefView({ text, label }: { text: string; label: string }) {
 }
 
 /** Skuff fra høyre med briefen for modulen, oversikten over nettstedet, og JSON for deling. */
-export function BriefDrawer({ open, onClose, moduleBrief, workspaceBrief, questions, actions, backup, onCopy, onImported }: Props) {
-  const [tab, setTab] = useState<Tab>("modul");
+export function BriefDrawer({ open, initialTab = "modul", moduleLabel, onClose, moduleBrief, workspaceBrief, questions, actions, backup, onCopy, onImported }: Props) {
+  const [tab, setTab] = useState<BriefTab>(initialTab);
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const wasOpen = useRef(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      wasOpen.current = false;
+      return;
+    }
+    if (!wasOpen.current) {
+      wasOpen.current = true;
+      setTab(initialTab);
+    }
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, initialTab]);
 
   if (!open) return null;
 
@@ -80,7 +93,7 @@ export function BriefDrawer({ open, onClose, moduleBrief, workspaceBrief, questi
     }
     if (r.kind === "workspace") actions.replace(r.workspace);
     else if (!actions.insertModule(r.module)) {
-      setError("Det er ikke plass til flere moduler. Fjern en først.");
+      setError("Nettstedet har 50 moduler, det er taket. Fjern en i oversikten først.");
       return;
     }
     setDraft(null);
@@ -89,9 +102,15 @@ export function BriefDrawer({ open, onClose, moduleBrief, workspaceBrief, questi
   };
   const currentText = tab === "nettsted" ? workspaceBrief : tab === "json" ? jsonValue : moduleBrief;
 
+  const onTabKey = (e: React.KeyboardEvent) => {
+    const i = TABS.findIndex((t) => t.id === tab);
+    if (e.key === "ArrowRight") setTab(TABS[(i + 1) % TABS.length]!.id);
+    if (e.key === "ArrowLeft") setTab(TABS[(i - 1 + TABS.length) % TABS.length]!.id);
+  };
+
   return (
     <div className="fixed inset-0 z-30 flex justify-end" role="dialog" aria-modal="true" aria-label="Brief til Claude">
-      <button type="button" aria-label="Lukk" className="flex-1 bg-foreground/40" onClick={onClose} />
+      <button type="button" aria-label="Lukk briefen" className="flex-1 bg-foreground/40" onClick={onClose} />
       <div className="flex w-full max-w-[640px] flex-col gap-3 bg-card p-4 shadow-xl sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-bold">Brief til Claude</h2>
@@ -106,16 +125,20 @@ export function BriefDrawer({ open, onClose, moduleBrief, workspaceBrief, questi
         </div>
         <p className="m-0 text-[13px] text-secondary-foreground">
           {tab === "modul" &&
-            `${questions === 0 ? "Ingen åpne spørsmål. " : `${questions} ${questions === 1 ? "åpent spørsmål" : "åpne spørsmål"} nederst i briefen. `}Lim den inn i Claude med «Bygg en MVP av denne modulen».`}
-          {tab === "nettsted" && "Alle modulene og grensesnittene mellom dem. Gi denne til Claude sammen med modulbriefen når modulene skal snakke sammen."}
-          {tab === "json" && "Hele arbeidsområdet. Kopier og send til en kollega; de limer inn her og trykker «Importer»."}
+            `Modulen «${moduleLabel}». ${questions === 0 ? "Ingen åpne spørsmål. " : `${questions} ${questions === 1 ? "åpent spørsmål" : "åpne spørsmål"} nederst i briefen. `}Lim den inn i Claude med «Bygg en MVP av denne modulen».`}
+          {tab === "nettsted" && "Alle modulene, grensesnittene mellom dem og en foreslått byggerekkefølge. Gi denne til Claude sammen med modulbriefen."}
+          {tab === "json" && "Hele nettstedet. Kopier og send til en kollega; de limer inn her og trykker «Importer»."}
         </p>
-        <div className="flex gap-1 border-b border-border">
+        <div role="tablist" aria-label="Innhold i skuffen" className="flex gap-1 border-b border-border" onKeyDown={onTabKey}>
           {TABS.map((t) => (
             <button
               key={t.id}
+              id={`fane-${t.id}`}
               type="button"
-              aria-pressed={tab === t.id}
+              role="tab"
+              aria-selected={tab === t.id}
+              aria-controls={`panel-${t.id}`}
+              tabIndex={tab === t.id ? 0 : -1}
               onClick={() => setTab(t.id)}
               className={cn(
                 "min-h-11 border-b-2 border-transparent px-3 py-2 text-secondary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
@@ -126,12 +149,12 @@ export function BriefDrawer({ open, onClose, moduleBrief, workspaceBrief, questi
             </button>
           ))}
         </div>
-        {tab === "modul" && <BriefView text={moduleBrief} label="Brief til Claude, kan rulles" />}
-        {tab === "nettsted" && <BriefView text={workspaceBrief} label="Oversikt over nettstedet, kan rulles" />}
+        {tab === "modul" && <BriefView id="panel-modul" text={moduleBrief} label="Brief til Claude, kan rulles" />}
+        {tab === "nettsted" && <BriefView id="panel-nettsted" text={workspaceBrief} label="Oversikt over nettstedet, kan rulles" />}
         {tab === "json" && (
-          <div className="flex min-h-0 flex-1 flex-col gap-2">
+          <div id="panel-json" role="tabpanel" aria-labelledby="fane-json" className="flex min-h-0 flex-1 flex-col gap-2">
             <Textarea
-              aria-label="Arbeidsområdet som JSON. Lim inn noe fra en kollega her for å importere det."
+              aria-label="Nettstedet som JSON. Lim inn noe fra en kollega her for å importere det."
               className="min-h-0 flex-1 font-mono text-[12.5px]"
               maxLength={undefined}
               value={jsonValue}
@@ -160,9 +183,7 @@ export function BriefDrawer({ open, onClose, moduleBrief, workspaceBrief, questi
                 </Button>
               )}
             </div>
-            <p className="m-0 text-xs text-muted-foreground">
-              Et helt arbeidsområde erstatter ditt. Én enkelt flyt legges til som ny modul. Begge deler kan angres.
-            </p>
+            <p className="m-0 text-xs text-muted-foreground">Et helt nettsted erstatter ditt. Én enkelt modul legges til. Begge deler kan angres.</p>
           </div>
         )}
       </div>

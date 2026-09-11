@@ -26,23 +26,23 @@ export const NODE_META: Record<NodeType, NodeMeta> = {
   },
   person: {
     label: "Person",
-    hint: "En rolle som bruker flyten. Intern eller ekstern? Må de logge inn? Hva ser og endrer de?",
+    hint: "En rolle som bruker modulen. Intern eller ekstern? Må de logge inn? Hva ser og endrer de?",
     placeholder: "F.eks. Salgsansvarlig",
     briefTitle: "Personer og roller",
     next: ["start", "steg"],
   },
   start: {
     label: "Start",
-    hint: "Det som setter flyten i gang: et skjema, en knapp, en e-post som kommer inn, et fast tidspunkt.",
+    hint: "Det som setter modulen i gang: et skjema, en knapp, en e-post som kommer inn, et fast tidspunkt.",
     placeholder: "F.eks. Kunden sender inn skjema",
-    briefTitle: "Det som starter flyten",
+    briefTitle: "Det som starter modulen",
     next: ["steg", "data"],
   },
   steg: {
     label: "Steg",
     hint: "Én ting som skjer, og hvem som gjør det. Koble videre til neste steg.",
     placeholder: "F.eks. Salgsansvarlig setter status",
-    briefTitle: "Steg i flyten",
+    briefTitle: "Steg i modulen",
     next: ["steg", "regel", "data", "resultat", "system"],
   },
   regel: {
@@ -68,9 +68,9 @@ export const NODE_META: Record<NodeType, NodeMeta> = {
   },
   system: {
     label: "System",
-    hint: "En app eller flyt dere allerede har. Henter vi data derfra, sender vi dit, eller begge? Claude får beskjed om ikke å endre det.",
+    hint: "En app dere allerede har, eller en annen modul i nettstedet. Henter vi data derfra, sender vi dit, eller begge? Claude får beskjed om ikke å endre det.",
     placeholder: "F.eks. Microsoft Teams",
-    briefTitle: "Koblinger til andre systemer og flyter",
+    briefTitle: "Koblinger til andre systemer",
     next: ["steg", "data"],
   },
   sporsmal: {
