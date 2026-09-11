@@ -11,9 +11,9 @@ type Props = {
 /** Ramme rundt én rad i en liste (én input, ett steg, én kobling). */
 export function ItemCard({ onRemove, removeLabel, foot, children }: Props) {
   return (
-    <div className="grid gap-2 rounded-md border border-border bg-background p-3">
+    <div className="grid gap-2.5 rounded-md border border-border bg-background p-3">
       {children}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-end justify-between gap-2">
         <div className="min-w-0 flex-1">{foot}</div>
         <Button variant="danger" size="sm" onClick={onRemove} aria-label={removeLabel}>
           Fjern

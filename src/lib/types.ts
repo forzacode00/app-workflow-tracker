@@ -41,19 +41,32 @@ export const OUTPUT_FORMATS = [
 ] as const;
 
 export const TRIGGER_TYPES = [
-  "Bruker fyller ut et skjema",
-  "Bruker trykker på en knapp i en eksisterende app",
-  "E-post eller melding kommer inn",
+  "Noen fyller ut et skjema",
+  "Noen trykker på en knapp i en app vi har",
+  "En e-post eller melding kommer inn",
   "Data endres i et annet system",
-  "Tidsstyrt, kjører på et fast tidspunkt",
+  "Et fast tidspunkt, f.eks. hver natt",
 ] as const;
 
-const SHORT = 200;
-const LONG = 4000;
+export type InputType = (typeof INPUT_TYPES)[number];
+export type InputSource = (typeof INPUT_SOURCES)[number];
+export type StorageOption = (typeof STORAGE_OPTIONS)[number];
+export type LinkDirection = (typeof LINK_DIRECTIONS)[number];
+export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
+export type TriggerType = (typeof TRIGGER_TYPES)[number];
+
+/** Maks lengde på korte og lange tekstfelt. Brukes både i zod og som maxLength i UI. */
+export const SHORT = 200;
+export const LONG = 4000;
+/** Maks antall rader per liste. Holder briefen lesbar og forhåndsvisningen rask. */
+export const MAX_ITEMS = 30;
 
 /** Tom streng er lov (feltet er ikke fylt ut ennå), men en ugyldig verdi er ikke det. */
 const choice = <T extends readonly [string, ...string[]]>(list: T) =>
   z.union([z.literal(""), z.enum(list)]);
+
+/** Felt som er lagt til etter første versjon. Manglende verdi i gammel lagring blir tom streng. */
+const added = (max: number) => z.string().max(max).default("");
 
 export const inputFieldSchema = z.object({
   navn: z.string().max(SHORT),
@@ -68,12 +81,14 @@ export const dataEntitySchema = z.object({
   felter: z.string().max(LONG),
   eier: z.string().max(SHORT),
   lagring: choice(STORAGE_OPTIONS),
+  statuser: added(LONG),
 });
 
 export const stepSchema = z.object({
   tittel: z.string().max(SHORT),
   beskrivelse: z.string().max(LONG),
   regel: z.string().max(LONG),
+  unntak: added(LONG),
 });
 
 export const outputSchema = z.object({
@@ -99,11 +114,12 @@ export const workflowSchema = z.object({
   triggerType: choice(TRIGGER_TYPES),
   trigger: z.string().max(LONG),
   avgrensning: z.string().max(LONG),
-  inputs: z.array(inputFieldSchema).max(100),
-  data: z.array(dataEntitySchema).max(100),
-  steg: z.array(stepSchema).max(100),
-  outputs: z.array(outputSchema).max(100),
-  koblinger: z.array(linkSchema).max(100),
+  ukjent: added(LONG),
+  inputs: z.array(inputFieldSchema).max(MAX_ITEMS),
+  data: z.array(dataEntitySchema).max(MAX_ITEMS),
+  steg: z.array(stepSchema).max(MAX_ITEMS),
+  outputs: z.array(outputSchema).max(MAX_ITEMS),
+  koblinger: z.array(linkSchema).max(MAX_ITEMS),
   eksempel: z.boolean(),
 });
 
@@ -126,6 +142,7 @@ export const emptyWorkflow = (): Workflow => ({
   triggerType: "",
   trigger: "",
   avgrensning: "",
+  ukjent: "",
   inputs: [],
   data: [],
   steg: [],
@@ -136,8 +153,12 @@ export const emptyWorkflow = (): Workflow => ({
 
 export const emptyItem = {
   inputs: (): InputField => ({ navn: "", type: "", kilde: "", pakrevd: false, beskrivelse: "" }),
-  data: (): DataEntity => ({ entitet: "", felter: "", eier: "", lagring: "" }),
-  steg: (): Step => ({ tittel: "", beskrivelse: "", regel: "" }),
+  data: (): DataEntity => ({ entitet: "", felter: "", eier: "", lagring: "", statuser: "" }),
+  steg: (): Step => ({ tittel: "", beskrivelse: "", regel: "", unntak: "" }),
   outputs: (): Output => ({ navn: "", format: "", mottaker: "", kanal: "" }),
   koblinger: (): Link => ({ system: "", retning: "", hva: "", hvordan: "" }),
 } as const;
+
+/** Sant når brukeren ikke har skrevet noe som helst. */
+export const isBlank = (w: Workflow): boolean =>
+  JSON.stringify({ ...w, eksempel: false }) === JSON.stringify(emptyWorkflow());

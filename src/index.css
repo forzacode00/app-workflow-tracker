@@ -1,22 +1,24 @@
 @import "tailwindcss";
 
-/* Semantiske tokens. Komponenter bruker bare disse, aldri palettfarger eller hex. */
+/* Semantiske tokens. Komponenter bruker bare disse, aldri palettfarger eller hex.
+   Kontrast (WCAG): tekst-tokens er sjekket mot card og background til minst 4,5:1,
+   feltrammer (--input) mot background til minst 3:1, i begge moduser. */
 :root {
   --background: #f2f5f5;
   --foreground: #15211f;
   --card: #ffffff;
   --card-foreground: #15211f;
   --subtle: #e9eeee;
-  --muted-foreground: #7a8a88;
+  --muted-foreground: #62726f;
   --secondary-foreground: #4b5b59;
   --border: #d3dcda;
-  --input: #bfcbc8;
+  --input: #7f918e;
   --primary: #0f766e;
   --primary-foreground: #ffffff;
   --primary-soft: #d9efec;
-  --warning: #b45309;
+  --warning: #9a4a08;
   --warning-soft: #fbebd5;
-  --success: #15803d;
+  --success: #116b33;
   --success-soft: #dcf2e3;
   --destructive: #b42318;
   --code: #0e1716;
@@ -36,7 +38,7 @@
     --muted-foreground: #8a9b98;
     --secondary-foreground: #aebdba;
     --border: #2b3937;
-    --input: #3a4a48;
+    --input: #5a6d6a;
     --primary: #3fbfb2;
     --primary-foreground: #0b1514;
     --primary-soft: #173d3a;
@@ -77,7 +79,7 @@
   --color-code-dim: var(--code-dim);
   --color-ring: var(--ring);
 
-  --font-display: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "IBM Plex Sans", system-ui, sans-serif;
   --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }

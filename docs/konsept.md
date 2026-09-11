@@ -37,14 +37,17 @@ Hver del får status tom, påbegynt eller ferdig. «Ferdig» krever det minste C
 navn + type på hver input, minst to steg, mottaker på hver output, avgrensning satt. Prosenten
 øverst er andel ferdige deler. Den er en hjelp, ikke en sperre. Briefen kan kopieres når som helst.
 
-## Det som er bygget (MVP, versjon 1)
+## Det som er bygget (MVP, versjon 1, utbedret etter panel 2026-09-11)
 
 - Én side, alt lagres i nettleseren under nøkkelen `flytdesigner:v1`.
 - Eksempelflyt («Tilbudsforespørsel», bygget rundt fastpris-portalen) så første møte viser hva
   et komplett svar ser ut som.
 - Live brief, kopier til utklippstavle, rå tekst som reserve.
 - JSON-eksport og -import for å dele en flyt mellom kolleger. Import valideres med zod.
-- Tester på brief-generatoren, lagring/import og komplett-sjekken.
+- Briefen rammer inn brukerinnholdet som beskrivelse, escaper Markdown-struktur, samler alt uavklart under «Åpne spørsmål» og gir Claude konkrete krav (antakelser først, én test per kriterium og regel, vis testresultat).
+- Steg har «unntak», lagrede ting har «statuser og overganger», flyten har «det dere ikke vet ennå».
+- Uleselig lagret data overskrives aldri; kopi tas vare på. Angre på tømming, eksempel og import.
+- 58 tester: brief-generator, lagring/import, komplett-sjekk, hooken og rendertester. Se `docs/panel-2026-09-11.md`.
 
 ## Veikart
 

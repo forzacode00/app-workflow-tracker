@@ -16,7 +16,7 @@ export function ProgressNav({ checks }: { checks: SectionCheck[] }) {
           key={c.id}
           href={`#s-${c.id}`}
           className={cn(
-            "block min-h-11 border-t-[3px] px-1.5 py-2 text-xs no-underline hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+            "block min-h-11 border-t-[3px] px-1.5 py-2 text-[11px] no-underline hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:text-xs",
             STATUS_CLASS[c.status],
           )}
         >

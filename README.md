@@ -19,9 +19,9 @@ Appen kjører på <http://localhost:8080>. Trykk «Last eksempel» for å se en 
 
 ## Slik brukes den
 
-1. Fyll ut de sju delene. Fremdriftslinjen øverst viser hva som mangler.
+1. Trykk «Start egen flyt» og fyll ut de sju delene. Fremdriftslinjen øverst viser hva som mangler.
 2. Se briefen oppdatere seg til høyre.
-3. Trykk «Kopier brief», lim inn i Claude og skriv «Bygg en MVP av denne flyten».
+3. Trykk «Kopier brief», lim inn i Claude og skriv «Bygg en MVP av denne flyten». Briefen avslutter med «Åpne spørsmål» som Claude bør avklare først.
 4. Del flyten med en kollega via fanen «Lagret data (JSON)».
 
 Alt lagres bare i nettleseren din. Ingen backend ennå.

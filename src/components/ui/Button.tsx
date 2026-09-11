@@ -11,9 +11,10 @@ const VARIANTS: Record<Variant, string> = {
   danger: "bg-transparent text-destructive border-transparent hover:bg-subtle",
 };
 
+/* Minst 44 px trykkflate på mobil. Liten variant krymper først fra sm-bruddpunktet. */
 const SIZES: Record<Size, string> = {
   default: "min-h-11 px-4 py-2",
-  sm: "min-h-9 px-3 py-1.5 text-sm",
+  sm: "min-h-11 px-3 py-1.5 text-sm sm:min-h-9",
 };
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size };
@@ -23,7 +24,7 @@ export function Button({ className, variant = "outline", size = "default", type 
     <button
       type={type}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-md border font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50",
+        "inline-flex shrink-0 items-center justify-center gap-2 rounded-md border font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50",
         VARIANTS[variant],
         SIZES[size],
         className,
