@@ -228,6 +228,14 @@ describe("useWorkspace", () => {
     expect(result.current.flow.nodes[0]?.tittel).toBe("Mål");
   });
 
+  it("eksemplene kan velges ved id", () => {
+    const { result } = renderHook(() => useWorkspace());
+    act(() => result.current.loadExample("crm"));
+    expect(result.current.ws.moduler).toHaveLength(5);
+    act(() => result.current.loadExample("tilbud"));
+    expect(result.current.ws.moduler).toHaveLength(2);
+  });
+
   it("tøm modulen beholder plassen; er alt eksempel, tømmes hele nettstedet", () => {
     const { result } = renderHook(() => useWorkspace());
     act(() => result.current.setName("Min"));

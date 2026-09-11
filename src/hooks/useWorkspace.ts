@@ -14,7 +14,14 @@ import {
   type Module,
   type Workspace,
 } from "@/lib/workspace";
+import { crmWorkspace } from "@/lib/examples/crm";
 import { exampleWorkspace } from "@/lib/workspaceExample";
+
+export type ExampleId = "tilbud" | "crm";
+export const EXAMPLES: { id: ExampleId; label: string; beskrivelse: string; build: () => Workspace }[] = [
+  { id: "tilbud", label: "Tilbudsforespørsel", beskrivelse: "To moduler som snakker sammen. Start her.", build: exampleWorkspace },
+  { id: "crm", label: "CRM", beskrivelse: "Fem moduler: kontakter, muligheter, tilbud, oppfølging og rapportering.", build: crmWorkspace },
+];
 import { loadWorkspace, saveWorkspace, type LoadResult } from "@/lib/workspaceStorage";
 
 export type StorageState = { saveFailed: boolean; loadError: string | null };
@@ -282,7 +289,7 @@ export function useWorkspace() {
     setGeneration((g) => g + 1);
   }, [editWs]);
 
-  const loadExample = useCallback(() => replace(exampleWorkspace()), [replace]);
+  const loadExample = useCallback((which: ExampleId = "tilbud") => replace((EXAMPLES.find((e) => e.id === which) ?? EXAMPLES[0]!).build()), [replace]);
 
   const undo = useCallback((): boolean => {
     const prev = previous.current;

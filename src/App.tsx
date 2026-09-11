@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useClipboard } from "@/hooks/useClipboard";
 import { useToast } from "@/hooks/useToast";
-import { useWorkspace } from "@/hooks/useWorkspace";
+import { EXAMPLES, useWorkspace, type ExampleId } from "@/hooks/useWorkspace";
 import { isBlank, SHORT, type NodeType } from "@/lib/flow";
 import { openQuestions } from "@/lib/flowBrief";
 import { moduleName } from "@/lib/workspace";
@@ -43,6 +43,12 @@ export default function App() {
     show(ok ? "Kopiert. Lim det inn i Claude." : "Kunne ikke kopiere automatisk. Åpne briefen og marker teksten.");
   };
   const copyBrief = () => copyText(overview ? buildWorkspaceBrief(ws) : buildModuleBrief(ws));
+
+  const loadExample = (which: ExampleId) => {
+    actions.loadExample(which);
+    const ex = EXAMPLES.find((e) => e.id === which);
+    show(`Eksempelet «${ex?.label ?? which}» er lastet.`, undoAction);
+  };
 
   const startNew = () => {
     const wasBlank = isBlank(flow) || isExample;
@@ -126,11 +132,27 @@ export default function App() {
         </div>
         <div className="flex flex-wrap gap-2">
           {!isExample && !many && !overview && (
-            <div className={onlySeed ? "" : "hidden sm:block"}>
-              <Button size="sm" onClick={() => { actions.loadExample(); show("Eksempelet er lastet: to moduler som snakker sammen.", undoAction); }}>
-                Vis eksempel
-              </Button>
-            </div>
+            <details className={`relative ${onlySeed ? "" : "hidden sm:block"}`}>
+              <summary className="list-none [&::-webkit-details-marker]:hidden">
+                <Button size="sm" onClick={(e) => { (e.currentTarget.closest("details") as HTMLDetailsElement | null)?.toggleAttribute("open"); e.preventDefault(); }} aria-haspopup="menu">
+                  Vis eksempel
+                </Button>
+              </summary>
+              <div role="menu" className="absolute right-0 z-20 mt-1 w-[280px] rounded-md border border-border bg-card p-1 shadow-lg">
+                {EXAMPLES.map((ex) => (
+                  <button
+                    key={ex.id}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => loadExample(ex.id)}
+                    className="block w-full rounded px-3 py-2 text-left hover:bg-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  >
+                    <span className="block text-sm font-semibold">{ex.label}</span>
+                    <span className="block text-xs text-secondary-foreground">{ex.beskrivelse}</span>
+                  </button>
+                ))}
+              </div>
+            </details>
           )}
           {overview ? (
             <Button size="sm" onClick={newModule}>

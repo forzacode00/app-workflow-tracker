@@ -21,7 +21,9 @@ Produksjonsbygget får en Content-Security-Policy som meta-tag (`vite.config.ts`
   - `workspace.ts`: arbeidsområde v3 (`Workspace` = moduler + aktiv), `interfaces()` avleder grensesnitt fra `ref`,
     `tidyWorkspace`, `moduleSummary`, `moduleById`. `workspaceStorage.ts`: localStorage `flytdesigner:v3`, løfter v2/v1, backup.
     `workspaceBrief.ts`: modulbrief med grensesnitt-seksjon, brief for hele nettstedet, `buildOrder`.
-  - `flowExample.ts` er byggekloss for `workspaceExample.ts` (eksempelet med to moduler).
+  - `flowExample.ts` er byggekloss for `workspaceExample.ts` (eksempelet med to moduler). `examples/crm.ts` er CRM-eksempelet
+    (fem moduler), bygget med `examples/bygg.ts` (beskriv modulen, få bokser med plass og piler). `EXAMPLES` i `useWorkspace.ts`
+    lister eksemplene som «Vis eksempel»-menyen viser. `lib/examples/` bruker relative importer, så `scripts/` kan kjøre dem med tsx.
   - `flowStorage.ts`: v2-validering, brukes bare av `workspaceStorage`.
   - `migrateV1.ts`: løfter det gamle skjemaet (v1) til bokser. `lib/v1/` er det gamle skjemaet og finnes bare for
     migreringen. Ikke bygg nytt på det.
@@ -42,6 +44,7 @@ Produksjonsbygget får en Content-Security-Policy som meta-tag (`vite.config.ts`
   Fonter er selvhostet via `@fontsource`. React Flow-stilen overstyres nederst i `index.css`.
 
 ## Kommandoer
+- `npx tsx scripts/eksporter-briefer.ts crm docs/eksempler/crm` skriver briefene for et eksempel til Markdown, til gjennomlesing.
 - `npm run dev` (port 8080, faller tilbake på 8081 hvis opptatt).
 - `npm test` (vitest), `npm run typecheck`, `npm run lint`, `npm run build`, `npm run e2e` (Playwright, Chromium, starter dev-server på 4173).
 

@@ -25,6 +25,7 @@ for (const scheme of ["light", "dark"] as const) {
     await page.getByLabel("Tittel").waitFor();
     await page.screenshot({ path: join(out, `${name}-${scheme}-tom.png`) });
     await page.getByRole("button", { name: "Vis eksempel" }).click();
+    await page.getByRole("menuitem", { name: /Tilbudsforespørsel/ }).click();
     await page.waitForTimeout(600);
     await page.screenshot({ path: join(out, `${name}-${scheme}-modul.png`) });
     await page.getByRole("button", { name: "Oversikt" }).click();

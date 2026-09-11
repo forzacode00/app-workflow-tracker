@@ -15,10 +15,20 @@ describe("App", () => {
     expect(screen.queryByText("Eksempel, ikke dine data")).not.toBeInTheDocument();
   });
 
+  it("«Vis eksempel» → CRM laster fem moduler", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: "Vis eksempel" }));
+    await user.click(screen.getByRole("menuitem", { name: /CRM/ }));
+    expect(screen.getByLabelText("Navn på modulen")).toHaveValue("Kontakter");
+    expect(within(screen.getByLabelText("Modul")).getAllByRole("option")).toHaveLength(5);
+  });
+
   it("«Vis eksempel» laster to moduler, «Start egen modul» fjerner begge, og alt kan angres", async () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole("button", { name: "Vis eksempel" }));
+    await user.click(screen.getByRole("menuitem", { name: /Tilbudsforespørsel/ }));
     expect(screen.getByText("Eksempel, ikke dine data")).toBeInTheDocument();
     expect(screen.getByLabelText("Navn på modulen")).toHaveValue("Tilbudsforespørsel");
     expect(screen.getByLabelText("Modul")).toBeInTheDocument();

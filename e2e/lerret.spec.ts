@@ -105,6 +105,7 @@ test("slipp en pil på tomt lerret: ny boks der pilen ble sluppet", async ({ pag
 test("import av JSON viser boksene i utsnittet, og angre tar dem bort", async ({ page }) => {
   await startOwn(page, "Mål");
   await page.getByRole("button", { name: "Vis eksempel" }).click();
+  await page.getByRole("menuitem", { name: /Tilbudsforespørsel/ }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(17);
   await expect.poll(async () => (await stored(page))?.moduler?.length ?? 0).toBe(2);
   const json = JSON.stringify(await stored(page));
@@ -126,6 +127,7 @@ test("import av JSON viser boksene i utsnittet, og angre tar dem bort", async ({
 test("oversikten viser modulene og grensesnittene, og åpner en modul", async ({ page }) => {
   await startOwn(page, "Mål");
   await page.getByRole("button", { name: "Vis eksempel" }).click();
+  await page.getByRole("menuitem", { name: /Tilbudsforespørsel/ }).click();
   await page.getByRole("button", { name: "Oversikt" }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(2);
   // Piler mellom samme to moduler slås sammen per retning: én hver vei.
@@ -140,6 +142,7 @@ test("oversikten viser modulene og grensesnittene, og åpner en modul", async ({
 test("oversikten: dra en modul, plassen lagres; velg og fjern med angre", async ({ page }) => {
   await startOwn(page, "Mål");
   await page.getByRole("button", { name: "Vis eksempel" }).click();
+  await page.getByRole("menuitem", { name: /Tilbudsforespørsel/ }).click();
   await page.getByRole("button", { name: "Oversikt" }).click();
   const card = page.locator(".react-flow__node", { hasText: "Oppfølging etter tilbud" });
   await dragBy(page, card, 0, 160);
