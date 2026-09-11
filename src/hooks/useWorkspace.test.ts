@@ -184,7 +184,7 @@ describe("useWorkspace", () => {
     expect(result.current.ws.moduler).toHaveLength(3);
     expect(result.current.ws.aktiv).toBe(id);
     act(() => result.current.removeModule(stay!));
-    expect(result.current.module.x).toBe(420);
+    expect(result.current.module.x).toBe(560);
     act(() => result.current.switchModule("m1"));
     expect(result.current.module.navn).toBe("Første");
     act(() => result.current.moveModules({ m1: { x: 5, y: 6 } }));

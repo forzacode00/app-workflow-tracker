@@ -18,7 +18,7 @@ const followUp = (): Module => ({
   id: "eks-oppfolging",
   navn: "Oppfølging etter tilbud",
   eksempel: true,
-  x: 340,
+  x: 560,
   y: 0,
   nodes: [
     n("maal", "maal", "Ingen tilbud blir glemt etter at de er sendt", "I dag husker salgsansvarlig å følge opp «når det passer». Noen tilbud dør stille.", 0, 0),

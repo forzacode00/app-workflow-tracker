@@ -52,9 +52,9 @@ describe("hjelpere", () => {
   });
   it("placeModule legger fire på rad, så ny rad", () => {
     const ws = seedWorkspace();
-    expect(placeModule(ws)).toEqual({ x: 420, y: 0 });
+    expect(placeModule(ws)).toEqual({ x: 560, y: 0 });
     ws.moduler = [ws.moduler[0]!, seedModule("b"), seedModule("c"), seedModule("d")];
-    expect(placeModule(ws)).toEqual({ x: 0, y: 220 });
+    expect(placeModule(ws)).toEqual({ x: 0, y: 240 });
   });
   it("canRef bare for start, resultat og system", () => {
     expect(canRef("start") && canRef("resultat") && canRef("system")).toBe(true);

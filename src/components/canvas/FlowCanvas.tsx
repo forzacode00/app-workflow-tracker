@@ -81,20 +81,36 @@ export function FlowCanvas({ actions, onRemoved, moduleNames }: Props) {
     if (generation > 0) void fitView({ padding: 0.25, maxZoom: 1, minZoom: 0.55, duration: 200 });
   }, [generation, fitView]);
 
-  /* Ny boks utenfor utsnittet: panorer så den blir synlig, uten å endre zoom. */
+  /** Sentrerer på en boks hvis den ikke er helt synlig i lerretet (panelet ligger utenfor lerretet). */
+  const reveal = useCallback(
+    (id: string, always: boolean) => {
+      if (!wrapper.current) return;
+      const node = flow.nodes.find((n) => n.id === id);
+      if (!node) return;
+      const { x, y, zoom } = getViewport();
+      const { clientWidth: w, clientHeight: h } = wrapper.current;
+      const left = (node.x + x) * zoom;
+      const top = (node.y + y) * zoom;
+      const inside = left >= 0 && top >= 0 && left + NODE_W * zoom <= w && top + NODE_H * zoom <= h;
+      if (!inside || always) void setCenter(node.x + NODE_W / 2, node.y + NODE_H / 2, { zoom, duration: 250 });
+    },
+    [flow.nodes, getViewport, setCenter],
+  );
+
+  /* Ny boks: panorer så den blir synlig, én gang. På smale skjermer dekker panelet mye, så alltid. */
   useEffect(() => {
-    if (!lastAdded || !wrapper.current || centred.current === lastAdded) return;
+    if (!lastAdded || centred.current === lastAdded) return;
     centred.current = lastAdded;
-    const node = flow.nodes.find((n) => n.id === lastAdded);
-    if (!node) return;
-    const { x, y, zoom } = getViewport();
-    const { clientWidth: w, clientHeight: h } = wrapper.current;
-    const left = (node.x + x) * zoom;
-    const top = (node.y + y) * zoom;
-    const inside = left >= 0 && top >= 0 && left + NODE_W * zoom <= w && top + NODE_H * zoom <= h;
-    /* På smale skjermer dekker panelet mye; sentrer alltid så den nye boksen er synlig. */
-    if (!inside || w < 640) void setCenter(node.x + NODE_W / 2, node.y + NODE_H / 2, { zoom, duration: 250 });
-  }, [lastAdded, flow.nodes, getViewport, setCenter]);
+    reveal(lastAdded, (wrapper.current?.clientWidth ?? 0) < 640);
+  }, [lastAdded, reveal]);
+
+  /* Valgt boks som ligger utenfor lerretet (f.eks. bak panelet): panorer inn, én gang per valg. */
+  const revealedSel = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selectedId || revealedSel.current === selectedId) return;
+    revealedSel.current = selectedId;
+    if (selectedId !== lastAdded) reveal(selectedId, false);
+  }, [selectedId, lastAdded, reveal]);
 
   const edges = useMemo<Edge[]>(
     () =>

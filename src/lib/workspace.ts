@@ -49,8 +49,9 @@ export type Workspace = z.infer<typeof workspaceSchema>;
 export const REF_TYPES = ["start", "resultat", "system"] as const;
 export const canRef = (type: FlowNode["type"]): boolean => (REF_TYPES as readonly string[]).includes(type);
 
-export const OVERVIEW_OFFSET_X = 420;
-export const OVERVIEW_OFFSET_Y = 220;
+/* Modulkortet er 280 px bredt; 280 px luft gir plass til pil og etikett uten overlapp. */
+export const OVERVIEW_OFFSET_X = 560;
+export const OVERVIEW_OFFSET_Y = 240;
 
 export const newModuleId = (): string => newId("m");
 

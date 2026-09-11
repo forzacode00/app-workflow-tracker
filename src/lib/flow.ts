@@ -50,7 +50,7 @@ export const NODE_META: Record<NodeType, NodeMeta> = {
     hint: "«Når … skal …». Ta med et eksempel med tall, og hva som skjer hvis det ikke går.",
     placeholder: "F.eks. Over 200 000 kr varsles daglig leder",
     briefTitle: "Regler og unntak",
-    next: ["steg", "sporsmal"],
+    next: ["steg", "resultat", "sporsmal"],
   },
   data: {
     label: "Data",
