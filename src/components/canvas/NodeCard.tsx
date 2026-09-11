@@ -29,7 +29,11 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<Car
         {node.tittel || meta.placeholder}
       </span>
       {node.notat && <span className="mt-0.5 line-clamp-2 block text-xs text-secondary-foreground">{node.notat}</span>}
-      {node.ref && <span className="mt-1 block truncate text-[11px] font-medium text-primary">↔ {refName ?? "annen modul"}</span>}
+      {node.ref && (
+        <span className="mt-1 block truncate text-[11px] font-medium text-primary">
+          {node.type === "start" ? "← fra" : node.type === "resultat" ? "→ til" : "↔"} {refName ?? "annen modul"}
+        </span>
+      )}
       <Handle type="source" position={Position.Right} className={HANDLE} title="Trekk herfra for å koble til en annen boks" />
       {grow && (
         <button

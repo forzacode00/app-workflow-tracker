@@ -24,5 +24,8 @@ export const cell = (value: string): string =>
     .replace(/\r?\n/g, " ")
     .trim() || "?";
 
+/** Dagens dato som ÅÅÅÅ-MM-DD, til bunnen av briefen. */
+export const todayIso = (): string => new Date().toISOString().slice(0, 10);
+
 /** Klipper til maks lengde uten å kaste. Brukes der data kommer fra eldre versjoner. */
 export const clip = (value: string, max: number): string => (value.length > max ? value.slice(0, max) : value);

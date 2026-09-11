@@ -29,3 +29,7 @@ dist-ssr
 # Playwright
 test-results
 playwright-report
+
+# Hemmeligheter skal aldri i repo eller Dropbox-synk
+.env*
+!.env.example

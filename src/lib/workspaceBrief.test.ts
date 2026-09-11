@@ -61,16 +61,31 @@ describe("buildWorkspaceBrief", () => {
 });
 
 describe("buildOrder", () => {
-  it("setter den som mottar etter den som sender, og tåler sirkler", () => {
+  it("setter den som starter fra en annen etter den, uansett innsatt rekkefølge", () => {
     const a = seedModule("a", "A");
     const b = seedModule("b", "B");
     const c = seedModule("c", "C");
     b.nodes.push({ id: "st", type: "start", tittel: "", notat: "", x: 0, y: 0, ref: "c" });
     c.nodes.push({ id: "st", type: "start", tittel: "", notat: "", x: 0, y: 0, ref: "a" });
-    a.nodes.push({ id: "st", type: "start", tittel: "", notat: "", x: 0, y: 0, ref: "b" });
     const ws: Workspace = { versjon: 3, moduler: [b, c, a], aktiv: "a" };
     expect(buildOrder(ws).map((m) => m.id)).toEqual(["a", "c", "b"]);
-    expect(buildOrder(ws)).toHaveLength(3);
+  });
+  it("tåler sirkler og tar med alle modulene én gang", () => {
+    const a = seedModule("a", "A");
+    const b = seedModule("b", "B");
+    a.nodes.push({ id: "st", type: "start", tittel: "", notat: "", x: 0, y: 0, ref: "b" });
+    b.nodes.push({ id: "st", type: "start", tittel: "", notat: "", x: 0, y: 0, ref: "a" });
+    const ws: Workspace = { versjon: 3, moduler: [a, b], aktiv: "a" };
+    expect(buildOrder(ws).map((m) => m.id).sort()).toEqual(["a", "b"]);
+    expect(buildOrder(ws)).toHaveLength(2);
+  });
+  it("resultat sendt til en modul setter mottakeren etter; systembokser påvirker ikke rekkefølgen", () => {
+    const a = seedModule("a", "A");
+    const b = seedModule("b", "B");
+    a.nodes.push({ id: "re", type: "resultat", tittel: "", notat: "", x: 0, y: 0, ref: "b" });
+    b.nodes.push({ id: "sy", type: "system", tittel: "", notat: "", x: 0, y: 0, ref: "a" });
+    const ws: Workspace = { versjon: 3, moduler: [b, a], aktiv: "a" };
+    expect(buildOrder(ws).map((m) => m.id)).toEqual(["a", "b"]);
   });
 });
 

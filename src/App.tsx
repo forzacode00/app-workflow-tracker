@@ -62,6 +62,20 @@ export default function App() {
     else show("Ny modul. Skriv hva den skal oppnå.");
   }, [actions, show]);
 
+  /** Fra panelet: lag modulen og la boksen peke på den, uten å forlate boksen. */
+  const newModuleFor = useCallback(
+    (nodeId: string) => {
+      const id = actions.addModule("", { stay: true });
+      if (id === null) {
+        show("Nettstedet har 50 moduler, det er taket.");
+        return;
+      }
+      actions.updateNode(nodeId, { ref: id });
+      show("Ny modul laget, og boksen peker på den. Bytt modul øverst når du vil fylle den.");
+    },
+    [actions, show],
+  );
+
   const removeModule = useCallback(
     (id: string) => {
       actions.removeModule(id);
@@ -103,7 +117,7 @@ export default function App() {
             />
           )}
           {isExample && !overview && (
-            <span className="rounded-full bg-primary-soft px-2 py-0.5 text-[11.5px] font-semibold text-primary">Eksempel, ikke dine data</span>
+            <span className="hidden rounded-full bg-primary-soft px-2 py-0.5 text-[11.5px] font-semibold text-primary sm:inline">Eksempel, ikke dine data</span>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -124,8 +138,9 @@ export default function App() {
           <Button size="sm" onClick={() => setBriefOpen(true)} aria-haspopup="dialog" title={questions > 0 ? `${questions} åpne spørsmål i briefen` : undefined}>
             Vis brief
             {questions > 0 && !overview && (
-              <span className="rounded-full bg-warning-soft px-1.5 text-[11px] font-semibold text-warning tabular-nums" aria-label={`${questions} åpne spørsmål`}>
+              <span className="rounded-full bg-warning-soft px-1.5 text-[11px] font-semibold text-warning tabular-nums">
                 {questions}
+                <span className="sr-only"> åpne spørsmål</span>
               </span>
             )}
           </Button>
@@ -154,14 +169,14 @@ export default function App() {
             {many
               ? "Hver boks er en modul, pilene er grensesnitt i dataenes retning. «Åpne» går inn. "
               : "Én modul så langt. «+ Ny modul» lager den neste. "}
-            Grensesnitt lager du inne i en modul: velg en start-, resultat- eller systemboks og svar på «Peker på en annen modul?».
+            Grensesnitt lager du inne i en modul: velg en start-, resultat- eller systemboks og svar på «Mottar fra» eller «Sender til en annen modul?».
           </p>
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           {/* Panelet ligger først i DOM (tastaturrekkefølge) men vises etter lerretet. */}
           {actions.selected && (
-            <NodePanel node={actions.selected} otherModules={otherModules} actions={actions} onRemoved={onRemoved} onNewModule={newModule} />
+            <NodePanel node={actions.selected} otherModules={otherModules} actions={actions} onRemoved={onRemoved} onNewModule={newModuleFor} />
           )}
           <div className="relative order-1 min-h-0 flex-1">
             <ReactFlowProvider>

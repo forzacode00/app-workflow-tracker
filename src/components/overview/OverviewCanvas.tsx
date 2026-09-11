@@ -2,14 +2,12 @@ import { applyNodeChanges, Background, BackgroundVariant, Controls, MarkerType, 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FlowActions } from "@/hooks/useWorkspace";
 import { summarizeNodeChanges } from "@/lib/canvasChanges";
-import { interfaces, moduleName, moduleSummary, type Workspace } from "@/lib/workspace";
+import { MAX_OVERVIEW_EDGES, overviewEdges } from "@/lib/overviewEdges";
+import { moduleSummary, type Workspace } from "@/lib/workspace";
 import { moduleQuestionCount } from "@/lib/workspaceBrief";
 import { ModuleCard, type ModuleNode } from "./ModuleCard";
 
 const NODE_TYPES = { modul: ModuleCard };
-
-/** Flere piler enn dette gjør oversikten uleselig og treg. Resten står i briefen for hele nettstedet. */
-const MAX_OVERVIEW_EDGES = 200;
 
 const ARIA = {
   "node.a11yDescription.default": "Trykk Enter for å velge modulen. Piltaster flytter den. Tab videre til «Åpne» for å gå inn.",
@@ -36,35 +34,16 @@ const toNodes = (ws: Workspace, onOpen: (id: string) => void, onRemove: (id: str
     };
   });
 
-/**
- * Kanter for oversikten. Retningen er dataenes. Flere grensesnitt samme vei mellom to moduler
- * slås sammen til én pil med flere etiketter, så de ikke ligger oppå hverandre. «Ukjent» retning
- * tegnes stiplet uten pilhode.
- */
-function overviewEdges(ws: Workspace): Edge[] {
-  const groups = new Map<string, { source: string; target: string; labels: string[]; known: boolean }>();
-  const add = (source: string, target: string, label: string, known: boolean) => {
-    const key = `${source}>${target}`;
-    const g = groups.get(key) ?? { source, target, labels: [], known: false };
-    g.labels.push(label);
-    g.known = g.known || known;
-    groups.set(key, g);
-  };
-  for (const i of interfaces(ws)) {
-    const label = i.node.tittel.trim() || moduleName(ws.moduler.find((m) => m.id === i.til));
-    if (i.retning === "ukjent") add(i.fra, i.til, label, false);
-    if (i.retning === "sender" || i.retning === "begge") add(i.fra, i.til, label, true);
-    if (i.retning === "mottar" || i.retning === "begge") add(i.til, i.fra, label, true);
-  }
-  return [...groups.entries()].map(([key, g]) => ({
-    id: key,
-    source: g.source,
-    target: g.target,
-    label: g.labels.length > 2 ? `${g.labels.slice(0, 2).join(" · ")} +${g.labels.length - 2}` : g.labels.join(" · "),
-    markerEnd: g.known ? { type: MarkerType.ArrowClosed } : undefined,
-    style: g.known ? { strokeWidth: 1.75 } : { strokeWidth: 1.75, strokeDasharray: "6 4" },
+/** Kjent retning: heltrukket med pilhode. Ukjent: stiplet uten. */
+const toEdges = (ws: Workspace): Edge[] =>
+  overviewEdges(ws).map((e) => ({
+    id: e.id,
+    source: e.source,
+    target: e.target,
+    label: e.label,
+    markerEnd: e.known ? { type: MarkerType.ArrowClosed } : undefined,
+    style: e.known ? { strokeWidth: 1.75 } : { strokeWidth: 1.75, strokeDasharray: "6 4" },
   }));
-}
 
 /** Oversikten: hver modul er én boks, grensesnittene er pilene. */
 export function OverviewCanvas({ actions, onRemoveModule, onTruncated }: Props) {
@@ -76,7 +55,7 @@ export function OverviewCanvas({ actions, onRemoveModule, onTruncated }: Props) 
     if (!dragging.current) setNodes(toNodes(ws, switchModule, onRemoveModule));
   }, [ws, switchModule, onRemoveModule]);
 
-  const allEdges = useMemo(() => overviewEdges(ws), [ws]);
+  const allEdges = useMemo(() => toEdges(ws), [ws]);
   const edges = useMemo(() => allEdges.slice(0, MAX_OVERVIEW_EDGES), [allEdges]);
   useEffect(() => {
     if (allEdges.length > MAX_OVERVIEW_EDGES) onTruncated?.(allEdges.length - MAX_OVERVIEW_EDGES);

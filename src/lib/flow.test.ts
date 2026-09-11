@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  children,
   emptyFlow,
   flowSchema,
   isBlank,
@@ -11,7 +10,6 @@ import {
   OFFSET_Y,
   orderedSteps,
   placeNear,
-  seedFlow,
   tidyEdges,
   type Flow,
   type FlowNode,
@@ -50,7 +48,9 @@ describe("flowSchema", () => {
   });
 });
 
-describe("isBlank og seedFlow", () => {
+const seedFlow = (): Flow => ({ ...emptyFlow(), nodes: [{ id: "maal", type: "maal", tittel: "", notat: "", x: 0, y: 0 }] });
+
+describe("isBlank", () => {
   it("startkartet regnes som tomt", () => {
     expect(isBlank(seedFlow())).toBe(true);
   });
@@ -76,13 +76,10 @@ describe("tidyEdges", () => {
   });
 });
 
-describe("neighbours og children", () => {
+describe("neighbours", () => {
   const f = flowWith([node("a", "steg"), node("b", "regel"), node("c", "data")], [["a", "b"], ["c", "a"]]);
   it("naboer er uansett retning", () => {
     expect(neighbours(f, "a").map((n) => n.id)).toEqual(["b", "c"]);
-  });
-  it("barn er bare utgående", () => {
-    expect(children(f, "a").map((n) => n.id)).toEqual(["b"]);
   });
 });
 

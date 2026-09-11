@@ -159,6 +159,3 @@ export const emptyItem = {
   koblinger: (): Link => ({ system: "", retning: "", hva: "", hvordan: "" }),
 } as const;
 
-/** Sant når brukeren ikke har skrevet noe som helst. */
-export const isBlank = (w: Workflow): boolean =>
-  JSON.stringify({ ...w, eksempel: false }) === JSON.stringify(emptyWorkflow());

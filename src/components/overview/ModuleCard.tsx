@@ -18,8 +18,9 @@ export type ModuleNode = Node<ModuleCardData, "modul">;
 /* Håndtakene ankrer pilene, men kan ikke brukes: grensesnitt lages inne i modulen. */
 const HANDLE = "!opacity-0 !pointer-events-none";
 
-/** Én modul i oversikten. «Åpne» går inn i modulen; «Fjern» finnes når modulen er valgt. */
+/** Én modul i oversikten. «Åpne» går inn i modulen, «Fjern» tar den bort (kan angres). */
 export const ModuleCard = memo(function ModuleCard({ id, data, selected }: NodeProps<ModuleNode>) {
+  /* «Fjern» er alltid synlig: fjerning kan angres, og skjulte knapper blir ikke funnet. */
   return (
     <div
       className={cn(
@@ -42,19 +43,17 @@ export const ModuleCard = memo(function ModuleCard({ id, data, selected }: NodeP
           )}
         </span>
         <div className="flex gap-1.5">
-          {selected && (
-            <Button
-              size="sm"
-              variant="danger"
-              className="nodrag"
-              onClick={(e) => {
-                e.stopPropagation();
-                data.onRemove(id);
-              }}
-            >
-              Fjern
-            </Button>
-          )}
+          <Button
+            size="sm"
+            variant="danger"
+            className="nodrag"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onRemove(id);
+            }}
+          >
+            Fjern
+          </Button>
           <Button
             size="sm"
             className="nodrag"

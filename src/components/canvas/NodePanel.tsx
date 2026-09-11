@@ -16,7 +16,8 @@ type Props = {
   otherModules: Module[];
   actions: Pick<FlowActions, "updateNode" | "addNode" | "removeNodes" | "select">;
   onRemoved: (count: number) => void;
-  onNewModule: () => void;
+  /** Lag ny modul og la denne boksen peke på den, uten å forlate boksen. */
+  onNewModule: (nodeId: string) => void;
 };
 
 const TYPE_OPTIONS = NODE_TYPES.map((t) => ({ value: t, label: NODE_META[t].label }));
@@ -96,9 +97,9 @@ export function NodePanel({ node, otherModules, actions, onRemoved, onNewModule 
         ) : (
           <div className="flex flex-col gap-1.5 rounded-md border border-dashed border-input p-3">
             <span className="text-sm font-semibold text-secondary-foreground">{refLabel}</span>
-            <span className="text-xs text-secondary-foreground">Når nettstedet har flere moduler, kan denne boksen peke på en av dem. Det blir et grensesnitt.</span>
+            <span className="text-xs text-secondary-foreground">Nettstedet har bare denne modulen. Lag en ny, så peker boksen på den. Du blir stående her.</span>
             <div>
-              <Button size="sm" onClick={onNewModule}>
+              <Button size="sm" onClick={() => onNewModule(node.id)}>
                 + Lag ny modul
               </Button>
             </div>

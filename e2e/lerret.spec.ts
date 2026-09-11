@@ -112,8 +112,8 @@ test("import av JSON viser boksene i utsnittet, og angre tar dem bort", async ({
   await expect(page.locator(".react-flow__node")).toHaveCount(1);
   await expect(page.getByLabel("Modul", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: /^Vis brief/ }).click();
-  await page.getByRole("button", { name: "Del som JSON" }).click();
-  await page.getByLabel("Arbeidsområdet som JSON. Lim inn noe fra en kollega her for å importere det.").fill(json);
+  await page.getByRole("tab", { name: "Del som JSON" }).click();
+  await page.getByLabel("Nettstedet som JSON. Lim inn noe fra en kollega her for å importere det.").fill(json);
   await page.getByRole("button", { name: "Importer", exact: true }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(17);
   const visible = await page.locator(".react-flow__node").first().boundingBox();

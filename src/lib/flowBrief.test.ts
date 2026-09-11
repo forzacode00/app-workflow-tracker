@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { emptyFlow, seedFlow, type Flow, type FlowNode } from "./flow";
-import { buildFlowBrief, openQuestions } from "./flowBrief";
+import { emptyFlow, seedNode, type Flow, type FlowNode } from "./flow";
+import { openQuestions } from "./flowBrief";
 import { exampleFlow } from "./flowExample";
+import { workspaceFromFlow } from "./workspace";
+import { buildModuleBrief } from "./workspaceBrief";
+
+/** Briefen for ett kart alene, som én modul i et nettsted med bare den. */
+const buildFlowBrief = (f: Flow, today: string) => buildModuleBrief(workspaceFromFlow(f), "m1", today);
+const seedFlow = (): Flow => ({ ...emptyFlow(), nodes: [seedNode()] });
 
 const node = (id: string, type: FlowNode["type"], tittel: string, notat = "", y = 0): FlowNode => ({ id, type, tittel, notat, x: 0, y });
 
@@ -21,6 +27,7 @@ describe("buildFlowBrief", () => {
       "## Data som lagres",
       "## Resultater",
       "## Koblinger til andre systemer",
+      "## Grensesnitt mot andre moduler",
       "## Åpne spørsmål",
       "## Krav til bygget",
     ]);
@@ -54,6 +61,7 @@ describe("buildFlowBrief", () => {
     expect(brief).toContain("# Brief: (uten navn)");
     expect(brief).toContain("(ikke beskrevet)");
     expect(brief).toContain("Ingen. Modulen står alene.");
+    expect(brief).toContain("Ingen. Modulen står alene i nettstedet.");
   });
 
   it("skriver datoen sist", () => {

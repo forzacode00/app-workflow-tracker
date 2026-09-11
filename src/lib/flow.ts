@@ -109,7 +109,8 @@ export const flowEdgeSchema = z.object({
   to: idSchema,
 });
 
-const uniqueIds = (items: { id: string }[], ctx: z.RefinementCtx, path: string) => {
+/** Zod-sjekk: ingen to elementer med samme id. Sti peker på den andre forekomsten. */
+export const uniqueIds = (items: { id: string }[], ctx: z.RefinementCtx, path: string) => {
   const seen = new Set<string>();
   items.forEach((item, i) => {
     if (seen.has(item.id)) ctx.addIssue({ code: "custom", message: "Samme id brukes to ganger", path: [path, i, "id"] });
@@ -143,9 +144,6 @@ export const emptyFlow = (): Flow => ({ versjon: 2, navn: "", nodes: [], edges: 
 
 export const seedNode = (): FlowNode => ({ id: "maal", type: "maal", tittel: "", notat: "", x: 0, y: 0 });
 
-/** Startpunktet for en ny flyt: én målboks midt på lerretet. */
-export const seedFlow = (): Flow => ({ ...emptyFlow(), nodes: [seedNode()] });
-
 export const isBlank = (f: Flow): boolean =>
   f.navn.trim() === "" && f.edges.length === 0 && f.nodes.every((n) => n.tittel.trim() === "" && n.notat.trim() === "");
 
@@ -172,12 +170,6 @@ export function neighbours(flow: Flow, id: string): FlowNode[] {
     if (e.from === id) ids.add(e.to);
     if (e.to === id) ids.add(e.from);
   }
-  return flow.nodes.filter((n) => ids.has(n.id));
-}
-
-/** Bokser som `id` peker på (utgående kanter). */
-export function children(flow: Flow, id: string): FlowNode[] {
-  const ids = new Set(flow.edges.filter((e) => e.from === id).map((e) => e.to));
   return flow.nodes.filter((n) => ids.has(n.id));
 }
 

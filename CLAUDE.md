@@ -6,27 +6,32 @@ får en Markdown-brief per modul som limes inn i Claude for å bygge en MVP. Mod
 (start/resultat/system-bokser med `ref`), og oversikten viser hele nettstedet med grensesnittene. Felles regler: `../CLAUDE.md`.
 Konsept og veikart: `docs/konsept.md`. Panelfunn: `docs/panel-2026-09-11.md`. Review-runder på lerretet: `docs/iterasjoner-2026-09-11.md`.
 GitHub `forzacode00/app-workflow-tracker`. Push til `main` deployer til GitHub Pages
-(https://forzacode00.github.io/app-workflow-tracker/) etter at lint, typecheck, test og build er grønne.
+(https://forzacode00.github.io/app-workflow-tracker/) etter at lint, typecheck, test, build og e2e er grønne.
+Produksjonsbygget får en Content-Security-Policy som meta-tag (`vite.config.ts`); dev har den ikke.
 
 ## Stack og struktur
 - Vite 8 + React 19 + TypeScript 6 (`strict`), Tailwind 4, zod, `@xyflow/react` (React Flow) for lerretet,
   vitest + Testing Library, oxlint.
 - `src/lib/` ren logikk uten React:
-  - `flow.ts`: datamodell v2 (`Flow`, `FlowNode`, `FlowEdge`), `NODE_META` (etiketter, hint, hvilke typer som
-    følger naturlig etter hver type), `orderedSteps`, `neighbours`, `tidyEdges`, `seedFlow`.
-  - `flowBrief.ts`: briefen fra kartet, som liste av seksjoner. `openQuestions` samler alt uavklart.
+  - `flow.ts`: boksmodell (`Flow`, `FlowNode` med valgfri `ref`, `FlowEdge`), `NODE_META` (etiketter, hint, hvilke typer
+    som følger naturlig etter hver type), `orderedSteps`, `neighbours`, `tidyEdges`, `placeNear`, `uniqueIds`.
+  - `flowEdit.ts`: `anchorOf` (steget en bladboks henger på) og `stitch` (sy kjeden sammen ved sletting).
+  - `flowBrief.ts`: `SECTIONS` (seksjonene i en modulbrief), `openQuestions`, `renderBrief`. Appen bruker `buildModuleBrief`.
+  - `overviewEdges.ts`: pilene i oversikten, sammenslått per retning, uten React Flow-import.
   - `workspace.ts`: arbeidsområde v3 (`Workspace` = moduler + aktiv), `interfaces()` avleder grensesnitt fra `ref`,
-    `tidyWorkspace`, `moduleSummary`. `workspaceStorage.ts`: localStorage `flytdesigner:v3`, løfter v2/v1, backup.
-    `workspaceBrief.ts`: modulbrief med grensesnitt-seksjon, og brief for hele nettstedet.
+    `tidyWorkspace`, `moduleSummary`, `moduleById`. `workspaceStorage.ts`: localStorage `flytdesigner:v3`, løfter v2/v1, backup.
+    `workspaceBrief.ts`: modulbrief med grensesnitt-seksjon, brief for hele nettstedet, `buildOrder`.
+  - `flowExample.ts` er byggekloss for `workspaceExample.ts` (eksempelet med to moduler).
   - `flowStorage.ts`: v2-validering, brukes bare av `workspaceStorage`.
   - `migrateV1.ts`: løfter det gamle skjemaet (v1) til bokser. `lib/v1/` er det gamle skjemaet og finnes bare for
     migreringen. Ikke bygg nytt på det.
   - `canvasChanges.ts`: oppsummerer React Flow-endringer (flyttet, fjernet, valgt) uten React Flow-import, så det kan testes.
-  - `text.ts`: `lines`, `block`, `inline`, `cell`. All brukerinput i briefen går gjennom disse.
+  - `text.ts`: `lines`, `block`, `inline`, `cell`, `clip`, `todayIso`. All brukerinput i briefen går gjennom disse.
 - `src/hooks/useWorkspace.ts` eier arbeidsområdet og den aktive modulen (`flow`): `edit()` for innholdsendringer (nullstiller eksempel-flagget), `commit()` for
   flytting, dirty-vakt før første lagring, angre for tøm/eksempel/import/fjerning, `generation` (bytte av kart →
-  `fitView`) og `lastAdded` (panorer til ny boks). Tak på antall bokser, piler og moduler. Fjerning syr kjeden sammen.
-  Fra en bladboks (regel, resultat …) festes det nye på steget den henger på.
+  `fitView`) og `lastAdded` (panorer til ny boks, én gang). Tak på antall bokser, piler og moduler. `editWs(fn, { undoable })`
+  tar angre-kopi inne i oppdateringen. `addModule(navn, { stay: true })` lager modul uten å bytte. `useToast` (4 s, 8 s med handling),
+  `useClipboard`.
 - `src/components/canvas/`: `FlowCanvas` (React Flow eier posisjoner under dra, kartet får dem ved slipp; innhold og
   koblinger kommer alltid fra hooken),
   `NodeCard` (én boks, med «+» for å vokse), `NodePanel` (tittel, notat, type, legg til etter), `Palette`, `typeClass`.

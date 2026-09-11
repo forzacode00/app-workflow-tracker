@@ -112,3 +112,43 @@ se hele nettstedet med grensesnittene mellom. Det tas i runde 2 (se `konsept.md`
 | `aktiv` ut av lagret nettsted, UUID på moduler | arkitekt | Samme. |
 | Pil mellom moduler i oversikten som lager grensesnitt | UX | Runde 3 vurderer om det trengs etter at retningen er tydeligere i panelet. |
 | Bunnskuff som kan dras på mobil | førstegangsbruker | Middels. Panelet er 45 vh og lerretet sentrerer på ny boks nå. |
+
+## Runde 3: siste gjennomgang
+
+### Verifisert av teamet
+Alle rettinger fra runde 2 holder, med to unntak arkitekten fant og som er rettet under.
+Sikkerhet bekreftet escaping av modulnavn, backup før rydding, stripping av `ref` fra typer som
+ikke kan peke, og at etiketter på piler er tekstnoder. QA bekreftet at alle runde 2-testønsker var dekket.
+
+### Rettet
+- **Lerretet sentrerte på nytt ved hvert tastetrykk** etter at en boks var lagt til (bieffekt av
+  runde 2-rettingen for mobil). Sentrerer nå én gang per ny boks.
+- **«Tøm modulen» på en tom modul** overskrev angre-kopien. Er nå en no-op.
+- **«+ Lag ny modul» fra panelet** lager modulen og lar boksen peke på den, uten å forlate boksen.
+- **Retningstegn på boksen:** «← fra» for start, «→ til» for resultat, «↔» for system.
+- **Byggerekkefølge** tar hensyn til både start (mottar fra) og resultat (sender til). Ved sirkel
+  velges først modulen som ikke selv starter fra noen. Testene er asykliske og krever sortering.
+- **Unike boks-id-er** sjekkes også i nettsted-import (v3), ikke bare i kart (v2).
+- **Content-Security-Policy** som meta-tag i produksjonsbygget (ikke i dev, der React-pluginen
+  trenger inline-script). `.env*` i `.gitignore` før Supabase.
+- **«Fjern» på modul** vises alltid (kan angres). Etiketter på piler bruker tokens i mørk modus.
+  Fokus følger piltastene i fanene. Skjermlesertekst for antall åpne spørsmål.
+- **Opprydding:** `anchorOf` og `stitch` flyttet til `lib/flowEdit.ts`, `overviewEdges` til
+  `lib/overviewEdges.ts`, begge med egne tester. `buildFlowBrief`, `seedFlow`, `children` og v1
+  `isBlank` er fjernet. `moduleById` og `todayIso` erstatter gjentatte uttrykk. `CLAUDE.md` oppdatert.
+- **Tester:** 141 vitest, 7 Playwright.
+
+### Utsatt, med begrunnelse
+| Forslag | Fra | Hvorfor ikke nå |
+|---|---|---|
+| Dele hooken i redigering og lagring, `aktiv` ut av lagret data, UUID på moduler | arkitekt | Forutsetning for Supabase; tas som første oppgave der. |
+| Pil mellom moduler i oversikten som lager grensesnitt | UX | Retningen er nå tydelig i panelet. Vurderes etter bruk. |
+| Bunnskuff som kan dras på mobil | førstegangsbruker | Panelet er 45 vh og lerretet sentrerer på ny boks. |
+| Bundle-budsjett som feiler i CI | QA | Største chunk er 65 kB gzip, langt under grensen. |
+
+### Til Supabase (fra sikkerhetsrevisor)
+1. RLS på hver tabell, policy per operasjon, aldri `USING (true)`. Test som leser en annen brukers rad og forventer tomt svar.
+2. Alt skjema i `supabase/migrations/`. Søk `TO anon`, `SECURITY DEFINER`, `GRANT … TO anon` før hver policy-endring.
+3. Kun `VITE_SUPABASE_URL` og publishable-nøkkel i klient, som GitHub Actions-variabler. Service-role bare i function secrets.
+4. Edge function for «Hva mangler?» validerer med `supabase.auth.getUser()`, zod med samme tak, rate-limit, CORS låst til Pages-domenet.
+5. Innlogging kun på invitasjon, og størrelsesgrense på lagret JSON server-side.

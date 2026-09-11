@@ -44,6 +44,11 @@ describe("parseWorkspace", () => {
     const r = parseWorkspace(JSON.stringify({ versjon: 3, aktiv: "a", moduler: [{ id: "a", navn: "", nodes: [{ id: "n", type: "nei", tittel: "", notat: "", x: 0, y: 0 }], edges: [] }] }));
     expect(!r.ok && r.error).toContain("moduler.0.nodes.0.type");
   });
+  it("avviser duplikate boks-id-er inne i en modul", () => {
+    const n = { type: "steg", tittel: "", notat: "", x: 0, y: 0 };
+    const r = parseWorkspace(JSON.stringify({ versjon: 3, aktiv: "a", moduler: [{ id: "a", navn: "", nodes: [{ ...n, id: "dup" }, { ...n, id: "dup" }], edges: [] }] }));
+    expect(!r.ok && r.error).toContain("moduler.0.nodes.1.id");
+  });
   it("bruker skjemaets egen melding ved duplikat modul-id, også midt i listen", () => {
     const m = { id: "a", navn: "", nodes: [], edges: [] };
     const r = parseWorkspace(JSON.stringify({ versjon: 3, aktiv: "a", moduler: [m, { ...m, id: "b" }, m] }));

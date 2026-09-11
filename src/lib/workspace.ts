@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { flowEdgeSchema, flowNodeSchema, MAX_COORD, MAX_EDGES, MAX_NODES, newId, seedNode, SHORT, tidyEdges, type Flow, type FlowNode } from "./flow";
+import { flowEdgeSchema, flowNodeSchema, MAX_COORD, MAX_EDGES, MAX_NODES, newId, seedNode, SHORT, tidyEdges, uniqueIds, type Flow, type FlowNode } from "./flow";
 
 /**
  * Et nettsted er alle modulene som til sammen blir ett produkt eller økosystem.
@@ -10,16 +10,21 @@ export const MAX_MODULES = 50;
 const idSchema = z.string().min(1).max(40);
 const coord = z.number().finite().min(-MAX_COORD).max(MAX_COORD);
 
-export const moduleSchema = z.object({
-  id: idSchema,
-  navn: z.string().max(SHORT),
-  nodes: z.array(flowNodeSchema).max(MAX_NODES),
-  edges: z.array(flowEdgeSchema).max(MAX_EDGES),
-  eksempel: z.boolean().default(false),
-  /** Plass i oversikten. */
-  x: coord.default(0),
-  y: coord.default(0),
-});
+export const moduleSchema = z
+  .object({
+    id: idSchema,
+    navn: z.string().max(SHORT),
+    nodes: z.array(flowNodeSchema).max(MAX_NODES),
+    edges: z.array(flowEdgeSchema).max(MAX_EDGES),
+    eksempel: z.boolean().default(false),
+    /** Plass i oversikten. */
+    x: coord.default(0),
+    y: coord.default(0),
+  })
+  .superRefine((m, ctx) => {
+    uniqueIds(m.nodes, ctx, "nodes");
+    uniqueIds(m.edges, ctx, "edges");
+  });
 
 export const workspaceSchema = z
   .object({
@@ -82,6 +87,8 @@ const stripRef = (n: FlowNode): FlowNode => {
 export const asFlow = (m: Module): Flow => ({ versjon: 2, navn: m.navn, nodes: m.nodes, edges: m.edges, eksempel: m.eksempel });
 
 export const activeModule = (ws: Workspace): Module => ws.moduler.find((m) => m.id === ws.aktiv) ?? ws.moduler[0]!;
+
+export const moduleById = (ws: Workspace, id: string): Module | undefined => ws.moduler.find((m) => m.id === id);
 
 export const moduleName = (m: Module | undefined): string => {
   if (!m) return "(ukjent modul)";

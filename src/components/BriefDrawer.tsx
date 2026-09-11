@@ -104,8 +104,10 @@ export function BriefDrawer({ open, initialTab = "modul", moduleLabel, onClose, 
 
   const onTabKey = (e: React.KeyboardEvent) => {
     const i = TABS.findIndex((t) => t.id === tab);
-    if (e.key === "ArrowRight") setTab(TABS[(i + 1) % TABS.length]!.id);
-    if (e.key === "ArrowLeft") setTab(TABS[(i - 1 + TABS.length) % TABS.length]!.id);
+    const next = e.key === "ArrowRight" ? TABS[(i + 1) % TABS.length] : e.key === "ArrowLeft" ? TABS[(i - 1 + TABS.length) % TABS.length] : undefined;
+    if (!next) return;
+    setTab(next.id);
+    document.getElementById(`fane-${next.id}`)?.focus();
   };
 
   return (

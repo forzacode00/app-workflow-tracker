@@ -1,51 +1,12 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MAX_EDGES, MAX_NODES, type Flow, type FlowEdge, type FlowNode } from "@/lib/flow";
+import { MAX_NODES } from "@/lib/flow";
 import { seedWorkspace } from "@/lib/workspace";
 import { exampleWorkspace } from "@/lib/workspaceExample";
 import { BACKUP_KEY, STORAGE_KEY } from "@/lib/workspaceStorage";
-import { anchorOf, SAVE_DELAY_MS, stitch, useWorkspace } from "./useWorkspace";
+import { SAVE_DELAY_MS, useWorkspace } from "./useWorkspace";
 
 afterEach(() => vi.useRealTimers());
-
-const edge = (from: string, to: string): FlowEdge => ({ id: `${from}-${to}`, from, to });
-const node = (id: string, type: FlowNode["type"]): FlowNode => ({ id, type, tittel: id, notat: "", x: 0, y: 0 });
-
-describe("stitch", () => {
-  it("syr gjennom flere fjernede bokser", () => {
-    const edges = [edge("a", "b"), edge("b", "c"), edge("c", "d")];
-    const out = stitch(edges, new Set(["b", "c"]));
-    expect(out.map((e) => `${e.from}>${e.to}`)).toEqual(["a>d"]);
-  });
-  it("lager ikke duplikater eller selvkoblinger, og holder seg under taket", () => {
-    const edges = [edge("a", "g1"), edge("a", "g2"), edge("g1", "b"), edge("g2", "b"), edge("a", "b"), edge("b", "a"), edge("a", "x")];
-    const out = stitch(edges, new Set(["g1", "g2"]));
-    expect(out.map((e) => `${e.from}>${e.to}`).sort()).toEqual(["a>b", "a>x", "b>a"]);
-    const many = Array.from({ length: 30 }, (_, i) => edge(`in${i}`, "g")).concat(Array.from({ length: 30 }, (_, i) => edge("g", `out${i}`)));
-    expect(stitch(many, new Set(["g"])).length).toBeLessThanOrEqual(MAX_EDGES);
-  });
-  it("tåler sløyfer blant de fjernede", () => {
-    const edges = [edge("a", "g1"), edge("g1", "g2"), edge("g2", "g1"), edge("g2", "b")];
-    expect(stitch(edges, new Set(["g1", "g2"])).map((e) => `${e.from}>${e.to}`)).toEqual(["a>b"]);
-  });
-});
-
-describe("anchorOf", () => {
-  const flow = (nodes: FlowNode[], edges: FlowEdge[]): Flow => ({ versjon: 2, navn: "", nodes, edges, eksempel: false });
-  it("foretrekker steget som peker inn i bladet", () => {
-    const f = flow([node("s1", "steg"), node("s3", "steg"), node("d", "data")], [edge("d", "s1"), edge("s3", "d")]);
-    expect(anchorOf(f, f.nodes[2]!)?.id).toBe("s3");
-  });
-  it("faller tilbake på steget bladet peker på", () => {
-    const f = flow([node("s1", "steg"), node("d", "data")], [edge("d", "s1")]);
-    expect(anchorOf(f, f.nodes[1]!)?.id).toBe("s1");
-  });
-  it("personer og steg er ikke blad", () => {
-    const f = flow([node("m", "maal"), node("p", "person"), node("s", "steg")], [edge("m", "p"), edge("m", "s")]);
-    expect(anchorOf(f, f.nodes[1]!)).toBeUndefined();
-    expect(anchorOf(f, f.nodes[2]!)).toBeUndefined();
-  });
-});
 
 describe("useWorkspace", () => {
   it("første besøk gir én modul med én målboks, valgt, uten å skrive til lagring", () => {
@@ -216,6 +177,13 @@ describe("useWorkspace", () => {
     });
     expect(result.current.ws.moduler).toHaveLength(2);
     expect(result.current.ws.aktiv).toBe(id);
+    let stay: string | null = "";
+    act(() => {
+      stay = result.current.addModule("Tredje", { stay: true });
+    });
+    expect(result.current.ws.moduler).toHaveLength(3);
+    expect(result.current.ws.aktiv).toBe(id);
+    act(() => result.current.removeModule(stay!));
     expect(result.current.module.x).toBe(420);
     act(() => result.current.switchModule("m1"));
     expect(result.current.module.navn).toBe("Første");
@@ -249,6 +217,15 @@ describe("useWorkspace", () => {
     expect(result.current.ws.moduler).toHaveLength(2);
     act(() => result.current.undo());
     expect(result.current.module.navn).toBe("Min");
+  });
+
+  it("tøm av en allerede tom modul rører ikke angre-kopien", () => {
+    const { result } = renderHook(() => useWorkspace());
+    act(() => result.current.updateNode("maal", { tittel: "Mål" }));
+    act(() => result.current.removeNodes(["maal"]));
+    act(() => result.current.reset());
+    act(() => result.current.undo());
+    expect(result.current.flow.nodes[0]?.tittel).toBe("Mål");
   });
 
   it("tøm modulen beholder plassen; er alt eksempel, tømmes hele nettstedet", () => {

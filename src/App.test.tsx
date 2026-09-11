@@ -66,16 +66,17 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
     await user.type(screen.getByLabelText("Tittel"), "Modul A{Enter}");
-    // Med én modul tilbyr panelet å lage en ny i stedet for en tom velger.
+    await user.type(screen.getByLabelText("Tittel"), "Får data fra B");
+    // Med én modul tilbyr panelet å lage en ny, som boksen straks peker på, uten å forlate boksen.
     await user.click(screen.getByRole("button", { name: "+ Lag ny modul" }));
-    await user.type(screen.getByLabelText("Tittel"), "Modul B{Enter}");
-    await user.type(screen.getByLabelText("Tittel"), "Får data fra A");
-    await user.selectOptions(screen.getByLabelText("Mottar fra en annen modul?"), "m1");
-    expect(screen.getByText("↔ Modul A")).toBeInTheDocument();
+    expect(screen.getByText("Ny modul laget, og boksen peker på den. Bytt modul øverst når du vil fylle den.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Tittel")).toHaveValue("Får data fra B");
+    expect(screen.getByLabelText("Mottar fra en annen modul?")).not.toHaveValue("");
+    expect(screen.getByText("← fra (uten navn)")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^Vis brief/ }));
-    expect(brief()).toHaveTextContent("**Denne modulen mottar fra «Modul A»** via start-boksen «Får data fra A»");
+    expect(brief()).toHaveTextContent("**Denne modulen mottar fra «(uten navn)»** via start-boksen «Får data fra B»");
     await user.click(screen.getByRole("tab", { name: "Hele nettstedet" }));
-    expect(screen.getByLabelText("Oversikt over nettstedet, kan rulles")).toHaveTextContent("**Modul A → Modul B**: Får data fra A");
+    expect(screen.getByLabelText("Oversikt over nettstedet, kan rulles")).toHaveTextContent("**(uten navn) → Modul A**: Får data fra B");
     await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Lukk" }));
     await user.click(screen.getByRole("button", { name: "Oversikt" }));
     expect(screen.getAllByText("Åpne")).toHaveLength(2);

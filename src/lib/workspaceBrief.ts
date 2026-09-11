@@ -1,7 +1,7 @@
 import { NODE_META } from "./flow";
 import { briefName, openQuestions, renderBrief, SECTIONS, type Section } from "./flowBrief";
-import { inline, lines } from "./text";
-import { activeModule, asFlow, interfaces, moduleName, moduleSummary, type Module, type Retning, type Workspace } from "./workspace";
+import { inline, lines, todayIso } from "./text";
+import { activeModule, asFlow, interfaces, moduleById, moduleName, moduleSummary, type Module, type Retning, type Workspace } from "./workspace";
 
 const has = (v: string) => v.trim().length > 0;
 
@@ -27,7 +27,7 @@ export function interfaceSection(ws: Workspace, moduleId: string): string[] {
   if (own.length === 0 && incoming.length === 0) return ["Ingen. Modulen står alene i nettstedet."];
   const out: string[] = [];
   for (const i of own) {
-    const other = ws.moduler.find((m) => m.id === i.til);
+    const other = moduleById(ws, i.til);
     if (!other) continue;
     const s = moduleSummary(other);
     out.push(`- **${RETNING[i.retning]} «${inline(s.navn)}»** via ${NODE_META[i.node.type].label.toLowerCase()}-boksen «${inline(i.node.tittel) || "(uten tittel)"}».`);
@@ -37,7 +37,7 @@ export function interfaceSection(ws: Workspace, moduleId: string): string[] {
     if (s.resultater.length) out.push(`  - Gir der: ${s.resultater.map(inline).join("; ")}`);
   }
   for (const i of incoming) {
-    const other = ws.moduler.find((m) => m.id === i.fra);
+    const other = moduleById(ws, i.fra);
     if (!other) continue;
     out.push(
       `- **«${inline(moduleName(other))}» ${MOTSATT[i.retning]}** via sin ${NODE_META[i.node.type].label.toLowerCase()}-boks «${inline(i.node.tittel) || "(uten tittel)"}».${has(i.node.notat) ? ` ${inline(i.node.notat)}` : ""}`,
@@ -48,8 +48,8 @@ export function interfaceSection(ws: Workspace, moduleId: string): string[] {
 }
 
 /** Briefen for én modul: kartets seksjoner pluss grensesnitt, satt inn før «Åpne spørsmål». */
-export function buildModuleBrief(ws: Workspace, moduleId: string = ws.aktiv, today: string = new Date().toISOString().slice(0, 10)): string {
-  const m = ws.moduler.find((x) => x.id === moduleId) ?? activeModule(ws);
+export function buildModuleBrief(ws: Workspace, moduleId: string = ws.aktiv, today: string = todayIso()): string {
+  const m = moduleById(ws, moduleId) ?? activeModule(ws);
   const flow = asFlow(m);
   const grensesnitt: Section = { id: "grensesnitt", title: "Grensesnitt mot andre moduler", body: () => interfaceSection(ws, m.id) };
   const idx = SECTIONS.findIndex((s) => s.id === "sporsmal");
@@ -59,31 +59,34 @@ export function buildModuleBrief(ws: Workspace, moduleId: string = ws.aktiv, tod
   return renderBrief(briefName(flow), intro, sections, flow, today);
 }
 
-/** Moduler i byggerekkefølge: en modul som starter fra en annen, kommer etter den. Sirkler brytes i innsatt rekkefølge. */
+/**
+ * Moduler i byggerekkefølge: den som mottar (start fra, eller resultat sendt til) kommer etter
+ * den som gir. Ved sirkel velges først den som ikke selv starter fra noen, deretter innsatt rekkefølge.
+ */
 export function buildOrder(ws: Workspace): Module[] {
   const before = new Map<string, Set<string>>();
+  const startsFromOther = new Set<string>();
   for (const m of ws.moduler) before.set(m.id, new Set());
   for (const i of interfaces(ws)) {
-    if (i.node.type === "start") before.get(i.fra)?.add(i.til);
-  }
-  const done = new Set<string>();
-  const out: Module[] = [];
-  const visit = (m: Module, path: Set<string>) => {
-    if (done.has(m.id) || path.has(m.id)) return;
-    path.add(m.id);
-    for (const dep of before.get(m.id) ?? []) {
-      const d = ws.moduler.find((x) => x.id === dep);
-      if (d) visit(d, path);
+    if (i.node.type === "start") {
+      before.get(i.fra)?.add(i.til);
+      startsFromOther.add(i.fra);
     }
-    done.add(m.id);
-    out.push(m);
-  };
-  for (const m of ws.moduler) visit(m, new Set());
+    if (i.node.type === "resultat") before.get(i.til)?.add(i.fra);
+  }
+  const remaining = ws.moduler.slice();
+  const out: Module[] = [];
+  while (remaining.length) {
+    const free = remaining.find((m) => [...(before.get(m.id) ?? [])].every((dep) => !remaining.some((r) => r.id === dep)));
+    const pick = free ?? remaining.find((m) => !startsFromOther.has(m.id)) ?? remaining[0]!;
+    out.push(pick);
+    remaining.splice(remaining.indexOf(pick), 1);
+  }
   return out;
 }
 
 /** Oversikten over hele nettstedet: alle moduler, målene deres, grensesnittene og byggerekkefølgen. */
-export function buildWorkspaceBrief(ws: Workspace, today: string = new Date().toISOString().slice(0, 10)): string {
+export function buildWorkspaceBrief(ws: Workspace, today: string = todayIso()): string {
   const out: string[] = [
     "# Nettstedet: alle moduler og grensesnittene mellom dem",
     "",
@@ -105,8 +108,8 @@ export function buildWorkspaceBrief(ws: Workspace, today: string = new Date().to
   const all = interfaces(ws);
   if (all.length === 0) out.push("Ingen ennå. Modulene står hver for seg.");
   for (const i of all) {
-    const fra = ws.moduler.find((m) => m.id === i.fra);
-    const til = ws.moduler.find((m) => m.id === i.til);
+    const fra = moduleById(ws, i.fra);
+    const til = moduleById(ws, i.til);
     if (!fra || !til) continue;
     /* Alltid i dataenes retning, som pilene i oversikten. */
     const [a, verb, c] =

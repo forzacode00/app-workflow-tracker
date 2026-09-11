@@ -66,6 +66,8 @@ export function FlowCanvas({ actions, onRemoved, moduleNames }: Props) {
   const { fitView, setCenter, getViewport, screenToFlowPosition } = useReactFlow();
   const wrapper = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
+  /** Siste boks lerretet har sentrert på, så senere redigeringer ikke drar utsnittet tilbake. */
+  const centred = useRef<string | null>(null);
 
   const onGrow = useCallback((fromId: string, type: NodeType) => addNode(type, fromId), [addNode]);
 
@@ -81,7 +83,8 @@ export function FlowCanvas({ actions, onRemoved, moduleNames }: Props) {
 
   /* Ny boks utenfor utsnittet: panorer så den blir synlig, uten å endre zoom. */
   useEffect(() => {
-    if (!lastAdded || !wrapper.current) return;
+    if (!lastAdded || !wrapper.current || centred.current === lastAdded) return;
+    centred.current = lastAdded;
     const node = flow.nodes.find((n) => n.id === lastAdded);
     if (!node) return;
     const { x, y, zoom } = getViewport();

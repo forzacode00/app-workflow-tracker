@@ -71,7 +71,8 @@ oversiktsvisning viser hver modul som én boks og grensesnittene som piler. Bygg
 
 1. ~~Flere kart per bruker~~ og 2. ~~bokser som peker på andre kart~~: bygget som moduler og grensesnitt.
 3. **Delt lagring.** Supabase med innlogging og RLS bundet til `auth.uid()`. Alle i selskapet ser
-   alle kart, bare eier endrer. Krever test som leser en annen brukers rad og forventer tomt svar.
+   alle moduler, bare eier endrer. Huskeliste fra sikkerhetsrevisor står sist i `iterasjoner-2026-09-11.md`.
+   Første oppgave: del hooken i redigering og lagring, ta `aktiv` ut av lagret data, UUID på moduler.
 4. **Registrer eksisterende apper.** En felles liste over systemer vi har, som systemboksen kan velge fra.
 5. **Claude-hjelp på kartet.** «Hva mangler?» via edge function som validerer brukeren med
    `supabase.auth.getUser()`, med rate-limit. Ikke før 3 er på plass.

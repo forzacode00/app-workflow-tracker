@@ -207,3 +207,12 @@
     min-height: 44px;
   }
 }
+
+/* Etiketter på piler i oversikten: React Flows standard er hvit lapp med svart tekst, uansett modus. */
+.react-flow__edge-textbg {
+  fill: var(--card);
+}
+.react-flow__edge-text {
+  fill: var(--foreground);
+  font-size: 12px;
+}

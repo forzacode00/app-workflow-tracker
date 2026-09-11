@@ -1,16 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  MAX_EDGES,
-  MAX_NODES,
-  newId,
-  placeNear,
-  seedNode,
-  type Flow,
-  type FlowEdge,
-  type FlowNode,
-  type NodeType,
-  type Position,
-} from "@/lib/flow";
+import { isBlank, MAX_EDGES, MAX_NODES, newId, placeNear, seedNode, type FlowNode, type NodeType, type Position } from "@/lib/flow";
+import { anchorOf, stitch } from "@/lib/flowEdit";
 import {
   activeModule,
   asFlow,
@@ -30,46 +20,6 @@ import { loadWorkspace, saveWorkspace, type LoadResult } from "@/lib/workspaceSt
 export type StorageState = { saveFailed: boolean; loadError: string | null };
 
 export const SAVE_DELAY_MS = 250;
-
-/** Bokser som henger på et steg. Legger man til noe fra en slik boks, festes det nye på steget den henger på. */
-const LEAF: readonly NodeType[] = ["regel", "sporsmal", "resultat", "system", "data"];
-const ANCHOR: readonly NodeType[] = ["steg", "start", "maal"];
-
-/** Steget en bladboks henger på: den som peker inn i boksen, ellers den boksen peker på. */
-export function anchorOf(flow: Flow, node: FlowNode): FlowNode | undefined {
-  if (!LEAF.includes(node.type)) return undefined;
-  const find = (ids: string[]) => flow.nodes.find((n) => ids.includes(n.id) && ANCHOR.includes(n.type));
-  return find(flow.edges.filter((e) => e.to === node.id).map((e) => e.from)) ?? find(flow.edges.filter((e) => e.from === node.id).map((e) => e.to));
-}
-
-/**
- * Sy kjeden sammen når bokser fjernes: alle som pekte inn i noe fjernet, pekes videre til
- * første beholdte boks bak det, også gjennom flere fjernede bokser. Holder seg under MAX_EDGES.
- */
-export function stitch(edges: FlowEdge[], gone: Set<string>): FlowEdge[] {
-  const kept = edges.filter((e) => !gone.has(e.from) && !gone.has(e.to));
-  const exits = (id: string, seen = new Set<string>()): string[] => {
-    if (seen.has(id)) return [];
-    seen.add(id);
-    return edges.filter((e) => e.from === id).flatMap((e) => (gone.has(e.to) ? exits(e.to, seen) : [e.to]));
-  };
-  const extra: FlowEdge[] = [];
-  const have = new Set(kept.map((e) => `${e.from}>${e.to}`));
-  for (const id of gone) {
-    const ins = edges.filter((e) => e.to === id && !gone.has(e.from)).map((e) => e.from);
-    if (!ins.length) continue;
-    const outs = exits(id);
-    for (const a of ins) {
-      for (const b of outs) {
-        const key = `${a}>${b}`;
-        if (a === b || have.has(key)) continue;
-        have.add(key);
-        extra.push({ id: newId("e"), from: a, to: b });
-      }
-    }
-  }
-  return [...kept, ...extra].slice(0, MAX_EDGES);
-}
 
 type EditOptions = { undoable?: boolean };
 
@@ -241,15 +191,19 @@ export function useWorkspace() {
     [editWs],
   );
 
-  /** Ny, tom modul. Returnerer id-en, eller null hvis det er fullt. */
+  /** Ny, tom modul. Returnerer id-en, eller null hvis det er fullt. Med `stay` blir du i modulen du er i. */
   const addModule = useCallback(
-    (navn = ""): string | null => {
+    (navn = "", opts: { stay?: boolean } = {}): string | null => {
       if (latest.current.moduler.length >= MAX_MODULES) return null;
       const id = newModuleId();
-      editWs((w) => (w.moduler.length >= MAX_MODULES ? w : { ...w, moduler: [...w.moduler, { ...seedModule(id, navn), ...placeModule(w) }], aktiv: id }));
-      setSelectedId("maal");
-      setView("modul");
-      setGeneration((g) => g + 1);
+      editWs((w) =>
+        w.moduler.length >= MAX_MODULES ? w : { ...w, moduler: [...w.moduler, { ...seedModule(id, navn), ...placeModule(w) }], aktiv: opts.stay ? w.aktiv : id },
+      );
+      if (!opts.stay) {
+        setSelectedId("maal");
+        setView("modul");
+        setGeneration((g) => g + 1);
+      }
       return id;
     },
     [editWs],
@@ -315,10 +269,12 @@ export function useWorkspace() {
   /** Tømmer den aktive modulen. Er hele nettstedet et eksempel, tømmes alt. Kan angres. */
   const reset = useCallback(() => {
     editWs(
-      (w) =>
-        w.moduler.every((m) => m.eksempel)
-          ? seedWorkspace()
-          : { ...w, moduler: w.moduler.map((m) => (m.id === w.aktiv ? { ...seedModule(m.id, ""), x: m.x, y: m.y } : m)) },
+      (w) => {
+        if (w.moduler.every((m) => m.eksempel)) return seedWorkspace();
+        const cur = activeModule(w);
+        if (isBlank(asFlow(cur))) return w;
+        return { ...w, moduler: w.moduler.map((m) => (m.id === cur.id ? { ...seedModule(m.id, ""), x: m.x, y: m.y } : m)) };
+      },
       { undoable: true },
     );
     setSelectedId("maal");
