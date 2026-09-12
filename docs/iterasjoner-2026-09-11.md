@@ -311,6 +311,10 @@ Velkomsten ble bare vist når nettleseren var helt tom, og kollegaen hadde lagri
 Rettet: velkomsten vises én gang per nettleser uansett, med «Fortsett der du slapp» for den som har
 noe fra før, og «Vis introduksjonen igjen» bak «?».
 
+### Magnus bestemte: opplæringen hver gang siden åpnes
+Ikke bare første gang. Velkomsten vises ved hver åpning, med «Lukk» øverst til høyre og de tre
+valgene. Flagget «sett» er fjernet fra lagringen. Testene lukker den med knappen først.
+
 ### Magnus' merknad
 «En må trene bruken litt før man kaster den ut.» Enig. Anbefalt: Magnus går gjennom intervjuet
 selv med en ekte sak, så én kollega med Magnus ved siden av, før lenken sendes bredt. Det som

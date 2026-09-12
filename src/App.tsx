@@ -19,7 +19,7 @@ import { isBlank, NODE_META, SHORT, type NodeType } from "@/lib/flow";
 import { nextStep, openQuestions } from "@/lib/flowBrief";
 import { asFlow, moduleName, type Module } from "@/lib/workspace";
 import { buildModuleBrief, buildWorkspaceBrief } from "@/lib/workspaceBrief";
-import { hasSeenWelcome, markWelcomeSeen, readBackup } from "@/lib/workspaceStorage";
+import { readBackup } from "@/lib/workspaceStorage";
 
 type Skjerm = "velkommen" | "intervju" | null;
 
@@ -32,8 +32,8 @@ export default function App() {
   /* Rett etter intervjuet: si hva neste steg er, i stedet for å dytte om det som ble hoppet over. */
   const [fraIntervju, setFraIntervju] = useState(false);
   const { ws, flow, module, undo } = actions;
-  /* Første gang i denne nettleseren: si hva appen er til for før noe annet, også for dem som prøvde før velkomsten fantes. */
-  const [skjerm, setSkjerm] = useState<Skjerm>(() => (hasSeenWelcome() ? null : "velkommen"));
+  /* Hver gang siden åpnes: si hva appen er til for før noe annet (Magnus, runde 5). Lukkes med knapp. */
+  const [skjerm, setSkjerm] = useState<Skjerm>("velkommen");
   const harNoe = !(ws.moduler.length === 1 && isBlank(asFlow(ws.moduler[0]!)));
 
   /* Bestillingene er tunge for store nettsteder. De bygges bare når skuffen er åpen, ellers på forespørsel. */
@@ -90,10 +90,7 @@ export default function App() {
   };
 
   /* Velkomst og intervju */
-  const leaveWelcome = (to: Skjerm) => {
-    markWelcomeSeen();
-    setSkjerm(to);
-  };
+  const leaveWelcome = (to: Skjerm) => setSkjerm(to);
   const welcomeExample = () => {
     leaveWelcome(null);
     loadExample("tilbud");

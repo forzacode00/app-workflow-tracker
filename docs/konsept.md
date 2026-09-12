@@ -52,7 +52,7 @@ vis testresultat). Tallet på «Vis brief»-knappen er antall åpne spørsmål.
   «Start egen modul» legger til en modul ved siden av; «Fjern eksempelet» i oversikten tømmer.
 - Tankemodellen i appen: plassholdere i spørsmålsform, «Neste:»-dytt med knapp, «Slik tenker du»,
   åpne spørsmål øverst i bestillingsskuffen. Se `iterasjoner-2026-09-11.md`, runde 4.
-- Velkomstskjerm som sier hva appen er til, og intervju (elleve spørsmål ett om gangen) som tegner
+- Velkomstskjerm ved hver åpning (kan lukkes) som sier hva appen er til, og intervju (elleve spørsmål ett om gangen) som tegner
   modulen. Lerretet er resultatet, ikke utgangspunktet. «Brief» heter «bestilling» i UI. Runde 5.
 - Lagring i nettleseren (`flytdesigner:v2`). Kart fra det gamle skjemaet (v1) løftes automatisk.
 - Brief-skuff med kopiering og JSON-deling. Angre på tøm, eksempel og import.

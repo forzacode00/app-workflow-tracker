@@ -20,7 +20,7 @@ Produksjonsbygget får en Content-Security-Policy som meta-tag (`vite.config.ts`
     tankemodellen, brukes som dytt over lerretet). Appen bruker `buildModuleBrief`.
   - `overviewEdges.ts`: pilene i oversikten, sammenslått per retning, uten React Flow-import.
   - `workspace.ts`: arbeidsområde v3 (`Workspace` = moduler + aktiv), `interfaces()` avleder grensesnitt fra `ref`,
-    `tidyWorkspace`, `moduleSummary`, `moduleById`. `workspaceStorage.ts`: localStorage `flytdesigner:v3`, løfter v2/v1, backup, `flytdesigner:velkommen` (velkomsten er sett).
+    `tidyWorkspace`, `moduleSummary`, `moduleById`. `workspaceStorage.ts`: localStorage `flytdesigner:v3`, løfter v2/v1, backup.
     `workspaceBrief.ts`: modulbrief med grensesnitt-seksjon, brief for hele nettstedet, `buildOrder`.
   - `bygg.ts`: beskriv en modul (mål, personer, start, steg med regler/data/resultat/system), få bokser med plass og piler.
     Brukes av intervjuet og eksemplene. `intervju.ts`: spørsmålene (`SPORSMAL`), svar-typen, `tilModul` (svar → modul via `bygg`).
@@ -42,7 +42,7 @@ Produksjonsbygget får en Content-Security-Policy som meta-tag (`vite.config.ts`
   `NodeCard` (én boks, med «+» for å vokse), `NodePanel` (tittel, notat, type, legg til etter), `Palette`, `typeClass`.
   `components/overview/`: `OverviewCanvas` og `ModuleCard` (nettstedet: moduler og grensesnitt).
   `Velkommen` (første skjerm: hva appen er til, tre valg) og `Intervju` (ett spørsmål om gangen, svarene blir en modul via
-  `adoptModule` i hooken). `BriefDrawer` viser åpne spørsmål, modulbrief, nettstedsbrief og JSON-deling. I UI heter briefen «bestilling». `SlikTenkerDu` er tankemodellen (fem spørsmål,
+  `adoptModule` i hooken). Velkomsten vises hver gang siden åpnes, med «Lukk». `BriefDrawer` viser åpne spørsmål, modulbrief, nettstedsbrief og JSON-deling. I UI heter briefen «bestilling». `SlikTenkerDu` er tankemodellen (fem spørsmål,
   vanlige feil) bak «?» i headeren. `components/ui/` er håndskrevne shadcn-lignende basiskomponenter.
 - Filnavn: PascalCase for komponenter, camelCase for hooks og lib. Tester ligger ved siden av filen de tester.
 - Semantiske fargetokens i `src/index.css`, inkludert én farge per bokstype (`--node-*`). Ingen palettfarger i JSX.

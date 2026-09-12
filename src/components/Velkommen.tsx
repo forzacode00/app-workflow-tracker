@@ -15,13 +15,18 @@ const TRINN = [
   ["Du limer bestillingen inn i Claude", "Claude bygger første versjon og spør om det som mangler. Ingen utviklere trengs."],
 ] as const;
 
-/** Første skjerm. Sier hva appen er til for, før den ber om noe som helst. */
+/** Første skjerm, hver gang siden åpnes. Sier hva appen er til for, før den ber om noe som helst. */
 export function Velkommen({ harNoe, onStart, onExample, onCanvas }: Props) {
   return (
     <main className="flex min-h-dvh flex-col items-center overflow-y-auto bg-background px-4 py-8 sm:justify-center sm:px-8">
       <div className="flex w-full max-w-[560px] flex-col gap-6">
-        <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-3">
           <p className="m-0 text-xs font-semibold tracking-[0.08em] text-primary uppercase">Flytdesigner</p>
+          <Button size="sm" variant="ghost" onClick={onCanvas} aria-label="Lukk introduksjonen">
+            Lukk
+          </Button>
+        </div>
+        <div className="flex flex-col gap-2">
           <h1 className="m-0 text-[28px] leading-tight font-bold tracking-[-0.01em] text-balance sm:text-[32px]">
             Beskriv noe som er tungvint på jobben. Få en bestilling Claude kan bygge en app fra.
           </h1>

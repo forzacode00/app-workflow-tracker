@@ -7,7 +7,7 @@ async function startOwn(page: Page, goal: string) {
   await page.goto("/");
   await page.evaluate((key) => localStorage.removeItem(key), STORAGE_KEY);
   await page.reload();
-  await page.getByRole("button", { name: "Tegn selv på lerretet" }).click();
+  await page.getByRole("button", { name: "Lukk introduksjonen" }).click();
   const title = page.getByLabel("Tittel");
   await expect(title).toBeFocused();
   await title.fill(goal);
@@ -87,6 +87,8 @@ test("dra en boks: posisjonen lagres og overlever omlasting", async ({ page }) =
     })
     .toBe(true);
   await page.reload();
+  // Velkomsten kommer ved hver åpning; den som har noe fra før, fortsetter der de slapp.
+  await page.getByRole("button", { name: "Fortsett der du slapp" }).click();
   const after = await page.locator(".react-flow__node").first().boundingBox();
   expect(Math.abs((after?.x ?? 0) - (before?.x ?? 0)) + Math.abs((after?.y ?? 0) - (before?.y ?? 0))).toBeGreaterThan(50);
 });

@@ -1,28 +1,33 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { exampleWorkflow } from "./lib/v1/example";
-import { markWelcomeSeen, WELCOME_KEY } from "./lib/workspaceStorage";
 
 const brief = () => screen.getByLabelText("Bestilling til Claude, kan rulles");
 
-describe("App", () => {
-  beforeEach(() => markWelcomeSeen());
+/** Velkomsten kommer hver gang. Testene som ikke handler om den, lukker den først. */
+async function renderApp() {
+  const user = userEvent.setup();
+  render(<App />);
+  await user.click(screen.getByRole("button", { name: "Lukk introduksjonen" }));
+  return user;
+}
 
-  it("aller første besøk: velkomsten sier hva appen er til, og «Tegn selv» går til lerretet", async () => {
-    localStorage.removeItem(WELCOME_KEY);
+describe("App", () => {
+  it("hver åpning: velkomsten sier hva appen er til, «Tegn selv» går til lerretet, og den kommer igjen ved neste åpning", async () => {
     const user = userEvent.setup();
-    render(<App />);
+    const first = render(<App />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Beskriv noe som er tungvint på jobben.");
     expect(screen.getByText("Du limer bestillingen inn i Claude")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Tegn selv på lerretet" }));
     expect(screen.getByLabelText("Tittel")).toHaveFocus();
-    expect(localStorage.getItem(WELCOME_KEY)).toBe("1");
+    first.unmount();
+    render(<App />);
+    expect(screen.getByRole("button", { name: "Start med spørsmålene" })).toBeInTheDocument();
   });
 
   it("velkomsten vises også for den som har noe fra før, med «Fortsett der du slapp», og kan hentes fram igjen bak «?»", async () => {
-    localStorage.removeItem(WELCOME_KEY);
     localStorage.setItem(
       "flytdesigner:v3",
       JSON.stringify({ versjon: 3, aktiv: "m1", moduler: [{ id: "m1", navn: "", x: 0, y: 0, eksempel: false, edges: [], nodes: [{ id: "maal", type: "maal", tittel: "Noe", notat: "", x: 0, y: 0 }] }] }),
@@ -38,7 +43,6 @@ describe("App", () => {
   });
 
   it("intervjuet: ett spørsmål om gangen, og svarene blir bokser på lerretet med bestilling", async () => {
-    localStorage.removeItem(WELCOME_KEY);
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole("button", { name: "Start med spørsmålene" }));
@@ -82,8 +86,7 @@ describe("App", () => {
   });
 
   it("«Avbryt» i intervjuet går tilbake uten å lage noe", async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    const user = await renderApp();
     await user.click(screen.getByRole("button", { name: "Svar på spørsmål i stedet" }));
     expect(screen.getByText("Spørsmål 1 av 11")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Avbryt" }));
@@ -91,8 +94,8 @@ describe("App", () => {
     expect(screen.queryByLabelText("Modul")).not.toBeInTheDocument();
   });
 
-  it("første besøk etter velkomsten: én målboks, panelet åpent med fokus i tittelen, og et hint", () => {
-    render(<App />);
+  it("etter velkomsten: én målboks, panelet åpent med fokus i tittelen, og et hint", async () => {
+    await renderApp();
     expect(screen.getByLabelText("Rediger mål")).toBeInTheDocument();
     expect(screen.getByLabelText("Tittel")).toHaveFocus();
     expect(screen.getByText(/Skriv hva du vil oppnå/)).toBeInTheDocument();
@@ -100,8 +103,7 @@ describe("App", () => {
   });
 
   it("«Vis eksempel» → CRM laster fem moduler", async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    const user = await renderApp();
     await user.click(screen.getByRole("button", { name: "Vis eksempel" }));
     await user.click(screen.getByRole("menuitem", { name: /CRM/ }));
     expect(screen.getByLabelText("Navn på modulen")).toHaveValue("Kontakter");
@@ -109,8 +111,7 @@ describe("App", () => {
   });
 
   it("«Vis eksempel» laster to moduler; «Start egen modul» legger til en tredje ved siden av; «Fjern eksempelet» tømmer alt", async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    const user = await renderApp();
     await user.click(screen.getByRole("button", { name: "Vis eksempel" }));
     await user.click(screen.getByRole("menuitem", { name: /Tilbudsforespørsel/ }));
     expect(screen.getByText("Eksempel, ikke dine data")).toBeInTheDocument();
@@ -126,8 +127,7 @@ describe("App", () => {
   });
 
   it("«Fjern eksempelet» i oversikten tømmer alt når alle modulene er eksempel", async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    const user = await renderApp();
     await user.click(screen.getByRole("button", { name: "Vis eksempel" }));
     await user.click(screen.getByRole("menuitem", { name: /CRM/ }));
     await user.click(screen.getByRole("button", { name: "Oversikt" }));
@@ -139,8 +139,7 @@ describe("App", () => {
   });
 
   it("dytter til neste spørsmål i tankemodellen, og «?» åpner «Slik tenker du»", async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    const user = await renderApp();
     expect(screen.queryByText("Neste:")).not.toBeInTheDocument();
     await user.type(screen.getByLabelText("Tittel"), "Færre e-poster");
     expect(screen.getByText("Hva setter det i gang?")).toBeInTheDocument();
@@ -158,8 +157,7 @@ describe("App", () => {
   });
 
   it("Enter i tittelen legger til neste boks, og briefen følger med", async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    const user = await renderApp();
     await user.type(screen.getByLabelText("Tittel"), "Færre e-poster{Enter}");
     expect(screen.getByLabelText("Rediger start")).toBeInTheDocument();
     await user.type(screen.getByLabelText("Tittel"), "Kunde sender skjema{Enter}");
@@ -172,8 +170,7 @@ describe("App", () => {
   });
 
   it("Backspace i tittelfeltet fjerner ikke boksen, men «Fjern boksen» gjør det, med angre", async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    const user = await renderApp();
     await user.type(screen.getByLabelText("Tittel"), "Mål{Backspace}");
     expect(screen.getByLabelText("Tittel")).toHaveValue("Må");
     await user.click(screen.getByRole("button", { name: "Fjern boksen" }));
@@ -184,8 +181,7 @@ describe("App", () => {
   });
 
   it("«Endre type» bytter panelet, og Esc lukker det", async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    const user = await renderApp();
     await user.click(screen.getByText("Endre type"));
     await user.selectOptions(screen.getByLabelText("Type"), "regel");
     expect(screen.getByLabelText("Rediger regel")).toBeInTheDocument();
@@ -194,8 +190,7 @@ describe("App", () => {
   });
 
   it("en start-boks kan peke på en annen modul, og det blir et grensesnitt i briefen og i oversikten", async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    const user = await renderApp();
     await user.type(screen.getByLabelText("Tittel"), "Modul A{Enter}");
     await user.type(screen.getByLabelText("Tittel"), "Får data fra B");
     // Med én modul tilbyr panelet å lage en ny, som boksen straks peker på, uten å forlate boksen.
@@ -214,8 +209,7 @@ describe("App", () => {
   });
 
   it("modulvelgeren bytter modul", async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    const user = await renderApp();
     await user.type(screen.getByLabelText("Tittel"), "Første");
     await user.click(screen.getByRole("button", { name: "Oversikt" }));
     await user.click(screen.getByRole("button", { name: "+ Ny modul" }));
@@ -230,16 +224,14 @@ describe("App", () => {
   });
 
   it("melder fra når kopiering ikke er mulig", async () => {
-    const user = userEvent.setup();
     vi.spyOn(navigator.clipboard, "writeText").mockRejectedValueOnce(new Error("nei"));
-    render(<App />);
+    const user = await renderApp();
     await user.click(screen.getByRole("button", { name: "Kopier bestillingen" }));
     expect(await screen.findByText("Kunne ikke kopiere automatisk. Åpne bestillingen og marker teksten.")).toBeInTheDocument();
   });
 
   it("import: feil ved ugyldig JSON, gammelt skjema blir ny modul, og kan angres", async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    const user = await renderApp();
     await user.type(screen.getByLabelText("Tittel"), "Min");
     await user.click(screen.getByRole("button", { name: /^Vis bestilling/ }));
     const dialog = screen.getByRole("dialog");
